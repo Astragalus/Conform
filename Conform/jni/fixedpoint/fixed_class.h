@@ -63,7 +63,7 @@ struct fixed_point {
 	fixed_point& operator -= (fixed_point r) { intValue -= r.intValue; return *this; }
 	fixed_point& operator *= (fixed_point r) { intValue = fixmul<p>(intValue, r.intValue); return *this; }
 	fixed_point& operator /= (fixed_point r) { intValue = fixdiv<p>(intValue, r.intValue); return *this; }
-	
+
 	fixed_point& operator *= (int32_t r) { intValue *= r; return *this; }
 	fixed_point& operator /= (int32_t r) { intValue /= r; return *this; }
 	
