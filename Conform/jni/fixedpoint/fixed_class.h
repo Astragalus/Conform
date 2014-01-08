@@ -41,6 +41,9 @@ Modified by Matthew Cushman in 2014
 
 #include "fixed_func.h"
 
+#define FRAC_MASK(p) ((2<<(p))-1)
+#define INT_MASK(p) ((-1)^FRAC_MASK(p))
+
 namespace fixedpoint {
 
 // The template argument p in all of the following functions refers to the 
@@ -52,6 +55,7 @@ struct fixed_point {
 	
 	fixed_point() : intValue(0) {}
 	/*explicit*/ fixed_point(int32_t i) : intValue(i << p) {}
+	/*explicit*/ fixed_point(uint32_t i) : intValue(i << p) {}
 	/*explicit*/ fixed_point(float f) : intValue(float2fix<p>(f)) {}
 	/*explicit*/ fixed_point(double f) : intValue(float2fix<p>((float)f)) {}
 	
@@ -81,7 +85,9 @@ struct fixed_point {
 	fixed_point operator * (int32_t r) const { fixed_point x = *this; x *= r; return x;}
 	fixed_point operator / (int32_t r) const { fixed_point x = *this; x /= r; return x;}
 
-	//operator int32_t() const { return intValue >> p; }
+	operator int32_t() const { return intValue >> p; }
+	operator uint32_t() const { return ((uint32_t)intValue) >> p; }
+	operator float() const { return fix2float<p>(intValue); }
 };
 
 // Specializations for use with plain integers
@@ -128,21 +134,19 @@ inline fixed_point<p> abs(fixed_point<p> a)
 }
 
 template <int p>
-inline int32_t trunc(fixed_point<p> a)
+inline fixed_point<p> trunc(fixed_point<p> a)
 {
-	return (a.intValue >> p);
+	fixed_point<p> r;
+	r.intValue = a.intValue & INT_MASK(p);
+	return r;
 }
 
 template <int p>
 inline fixed_point<p> frac(fixed_point<p> a)
 {
-	return (a.intValue << (32-p)) >> (32-p);
-}
-
-template <int p>
-inline fixed_point<p> mod1(fixed_point<p> a)
-{
-	return a.intValue >= 0 ? frac(a) : (1<<p) - frac(a);
+	fixed_point<p> r;
+	r.intValue = a.intValue & FRAC_MASK(p);
+	return r;
 }
 
 // specializations for 16.16 format
