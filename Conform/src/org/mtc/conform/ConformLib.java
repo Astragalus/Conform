@@ -4,9 +4,18 @@ import android.graphics.Bitmap;
 
 public class ConformLib {
 
-	static {
-		System.loadLibrary("conform");
+	private static ConformLib lib = null; 
+
+	private ConformLib() {
 	}
 	
-	public static native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo);
+	public static synchronized ConformLib get() {
+		if (lib == null) {
+			System.loadLibrary("conform");
+			lib = new ConformLib();
+		}
+		return lib;
+	}
+	
+	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo);
 }

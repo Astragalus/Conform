@@ -4,11 +4,10 @@ import org.mtc.conform.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -19,9 +18,7 @@ import android.view.View;
  * @see SystemUiHider
  */
 public class ConformActivity extends Activity {
-	static {
-		System.loadLibrary("conform");
-	}
+	public final static String TAG = "ConformActivity";
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -57,7 +54,7 @@ public class ConformActivity extends Activity {
         setContentView(R.layout.activity_conform);
 
         final View controlsView = findViewById(R.id.fullscreen_content_controls);
-        final View contentView = findViewById(R.id.plane_view);
+        final View contentView = findViewById(R.id.bitmapperView);
 
         // Set up an instance of SystemUiHider to control the system UI for
         // this activity.
@@ -72,6 +69,7 @@ public class ConformActivity extends Activity {
                     @Override
                     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
                     public void onVisibilityChange(boolean visible) {
+                    	Log.i(TAG,"onVisibilityChange called with visible = " + visible);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
                             // If the ViewPropertyAnimator API is available
                             // (Honeycomb MR2 and later), use it to animate the
@@ -162,9 +160,9 @@ public class ConformActivity extends Activity {
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
     
-    private Bitmap loadBitmap(int resource) {
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        return BitmapFactory.decodeResource(getResources(), resource, options);
-    }
+//    private Bitmap loadBitmap(int resource) {
+//        final BitmapFactory.Options options = new BitmapFactory.Options();
+//        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+//        return BitmapFactory.decodeResource(getResources(), resource, options);
+//    }
 }

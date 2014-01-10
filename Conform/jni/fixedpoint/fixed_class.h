@@ -35,10 +35,6 @@ Modified by Matthew Cushman in 2014
 #ifndef FIXEDP_CLASS_H_INCLUDED
 #define FIXEDP_CLASS_H_INCLUDED
 
-#ifdef _MSC_VER
-#pragma once
-#endif
-
 #include "fixed_func.h"
 
 #define FRAC_MASK(p) ((2<<(p))-1)
@@ -85,9 +81,8 @@ struct fixed_point {
 	fixed_point operator * (int32_t r) const { fixed_point x = *this; x *= r; return x;}
 	fixed_point operator / (int32_t r) const { fixed_point x = *this; x /= r; return x;}
 
-	operator int32_t() const { return intValue >> p; }
-	operator uint32_t() const { return ((uint32_t)intValue) >> p; }
-	operator float() const { return fix2float<p>(intValue); }
+	float toFloat() const { return fix2float<p>(intValue); }
+	uint32_t toUnsigned() const { return ((uint32_t)intValue) >> p; }
 };
 
 // Specializations for use with plain integers

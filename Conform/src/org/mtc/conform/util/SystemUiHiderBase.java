@@ -1,6 +1,7 @@
 package org.mtc.conform.util;
 
 import android.app.Activity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -9,7 +10,9 @@ import android.view.WindowManager;
  * API levels to show and hide the status bar.
  */
 public class SystemUiHiderBase extends SystemUiHider {
-    /**
+    public final static String TAG = "SystemUiHiderBase";
+	
+	/**
      * Whether or not the system UI is currently visible. This is a cached value
      * from calls to {@link #hide()} and {@link #show()}.
      */
@@ -41,6 +44,7 @@ public class SystemUiHiderBase extends SystemUiHider {
 
     @Override
     public void hide() {
+    	Log.i(TAG,"hiding");
         if ((mFlags & FLAG_FULLSCREEN) != 0) {
             mActivity.getWindow().setFlags(
                     WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -52,6 +56,7 @@ public class SystemUiHiderBase extends SystemUiHider {
 
     @Override
     public void show() {
+    	Log.i(TAG,"showing");
         if ((mFlags & FLAG_FULLSCREEN) != 0) {
             mActivity.getWindow().setFlags(
                     0,

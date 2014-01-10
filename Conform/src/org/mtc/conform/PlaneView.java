@@ -6,13 +6,16 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.util.AndroidRuntimeException;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 /**
  */
 public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
+	public final static String TAG = "PlaneView";
 	private Bitmap m_sourceBitmap;
 	private Bitmap m_drawnBitmap;
 	private final int m_defaultBitmapId;
@@ -49,7 +52,8 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 
 		
 		private void doDraw(Canvas c) {
-			ConformLib.pullbackBitmaps(m_sourceBitmap, m_drawnBitmap);
+			Log.v(TAG,"drawing...");
+			ConformLib.get().pullbackBitmaps(m_sourceBitmap, m_drawnBitmap);
 			c.drawBitmap(m_drawnBitmap, getMatrix(), null);
 		}
 		
@@ -86,18 +90,28 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 	}
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
+		Log.i(TAG,"surfaceCreated called");
 		m_sourceBitmap = BitmapFactory.decodeResource(getResources(), m_defaultBitmapId);
+		if (m_sourceBitmap == null) {
+			Log.e(TAG,"Error decoding source bitmap!");
+			throw new AndroidRuntimeException("Error decoding source bitmap!");
+		} else {
+			Log.i(TAG, "Decoded source bitmap - byte count = " + m_sourceBitmap.getByteCount());
+		}
 		final Rect surfRect = holder.getSurfaceFrame();
+		Log.i(TAG,"surfaceCreated: starting draw thread; initial size = " + surfRect + "");
 		m_thread.setRunning(true);
 		m_thread.start();
 		m_thread.setSurfaceSize(surfRect.width(), surfRect.height());
 	}
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+		Log.i(TAG,"surfaceChanged called with width = " + width + ", height = " + height);
 		m_thread.setSurfaceSize(width, height);
 	}
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
+		Log.i(TAG,"surfaceDestroyed called");
         boolean retry = true;
         m_thread.setRunning(false);
         while (retry) {
