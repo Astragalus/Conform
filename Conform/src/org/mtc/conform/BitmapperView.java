@@ -46,6 +46,8 @@ public class BitmapperView extends ImageView {
 			if (m_destImage.getWidth() != w || m_destImage.getHeight() != h) {
 				m_destImage.recycle();
 				m_destImage = null;
+			} else {
+				m_destImage.eraseColor(0);
 			}
 		}
 		if (m_destImage == null) {
