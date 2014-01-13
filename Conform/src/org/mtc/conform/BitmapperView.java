@@ -33,11 +33,11 @@ public class BitmapperView extends ImageView {
 			viewBitmap = ((BitmapDrawable)viewDrawable).getBitmap();
 		}
 		m_srcImage = viewBitmap != null ? Bitmap.createBitmap(viewBitmap) : BitmapFactory.decodeResource(getResources(), R.drawable.celtic);
-		setImageBitmap(map(getDestBitmap(256, 256)));
 	}
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
+		setImageBitmap(map(getDestBitmap(256, 256)));
 		super.onDraw(canvas);
 	}
 	
