@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.util.AndroidRuntimeException;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -19,6 +20,9 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 	private Bitmap m_sourceBitmap;
 	private Bitmap m_drawnBitmap;
 	private final int m_defaultBitmapId;
+	
+	private volatile float m_x = 0.5f;
+	private volatile float m_y = 0.5f;
 	class PlaneThread extends Thread {
 
 		private final SurfaceHolder m_holder;
@@ -53,7 +57,7 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 		
 		private void doDraw(Canvas c) {
 			Log.v(TAG,"drawing...");
-			ConformLib.get().pullbackBitmaps(m_sourceBitmap, m_drawnBitmap);
+			ConformLib.get().pullbackBitmaps(m_sourceBitmap, m_drawnBitmap, m_x, m_y);
 			c.drawBitmap(m_drawnBitmap, getMatrix(), null);
 		}
 		
@@ -83,7 +87,7 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 	
 	public PlaneView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		m_defaultBitmapId = attrs.getAttributeResourceValue(R.attr.defaultDrawable, R.drawable.celtic);
+		m_defaultBitmapId = R.drawable.celtic;
 		final SurfaceHolder holder = getHolder();
 		holder.addCallback(this);
 		m_thread = new PlaneThread(holder, context, attrs);
@@ -126,5 +130,14 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 			m_drawnBitmap.recycle();
 			m_drawnBitmap = null;
 		}
+	}
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			m_x = event.getX()/event.getDevice().getMotionRange(MotionEvent.AXIS_X).getRange();
+			m_y = event.getY()/event.getDevice().getMotionRange(MotionEvent.AXIS_Y).getRange();
+			return true;
+		}
+		return false;
 	}
 }

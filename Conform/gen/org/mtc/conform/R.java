@@ -30,6 +30,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     public static final class drawable {
         public static final int celtic=0x7f020000;
         public static final int ic_launcher=0x7f020001;
+        public static final int sploink=0x7f020002;
     }
     public static final class id {
         public static final int bitmapperView=0x7f070000;

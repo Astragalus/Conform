@@ -16,11 +16,15 @@ typedef fixedpoint::fixed_point<16> fixed;
 
 class Pixel {
 public:
+	//Construct a Pixel from a, r, g, and b values
 	explicit Pixel(const uint32_t &a, const uint32_t &r, const uint32_t &g, const uint32_t &b);
+	//Construct a Pixel from an ARGB_8888 formatted pixel
 	explicit Pixel(const uint32_t &pix);
+	//Construct a Pixel by linearly interpolating between two others
 	explicit Pixel(const Pixel &p0, const Pixel &p1, const fixed &t);
-	std::ostream& operator<<(std::ostream &os) const;
+	//Write Pixel to an ARGB_8888 formatted destination
 	void write(uint32_t &dest) const;
+	friend std::ostream& operator<<(std::ostream &os, const Pixel &pix);
 private:
 	const uint32_t a;
 	const uint32_t r;
@@ -28,10 +32,15 @@ private:
 	const uint32_t b;
 };
 
+std::ostream &operator<<(std::ostream &os, const fixed &f);
+std::ostream &operator<<(std::ostream &os, const Pixel &pix);
+std::ostream &operator<<(std::ostream &os, const std::complex<fixed> &z);
+
 class BitmapSampler {
 public:
+	//Construct an object representing a bitmap whose color can be sampled in various ways
 	BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight);
-
+	//Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
 	Pixel bilinearSample(const std::complex<fixed> &z) const;
 private:
 	const uint32_t *m_srcPixels;
@@ -60,7 +69,7 @@ private:
 class MoebiusTrans : public ComplexMap {
 public:
 	MoebiusTrans(const std::complex<fixed> &a, const std::complex<fixed> &b, const std::complex<fixed> &c, const std::complex<fixed> &d);
-	MoebiusTrans(const float a, const float b, const float c, const float d);
+	MoebiusTrans(const float ar, const float ai, const float br, const float bi, const float ci, const float cr, const float dr, const float di);
 	virtual std::complex<fixed> operator()(const std::complex<fixed> &z) const;
 private:
 	const std::complex<fixed> &m_a;

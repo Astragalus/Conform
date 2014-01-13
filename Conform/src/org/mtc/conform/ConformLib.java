@@ -17,5 +17,5 @@ public class ConformLib {
 		return lib;
 	}
 	
-	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo);
+	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo, float x, float y);
 }

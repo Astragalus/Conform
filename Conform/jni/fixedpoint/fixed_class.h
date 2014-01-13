@@ -35,9 +35,10 @@ Modified by Matthew Cushman in 2014
 #ifndef FIXEDP_CLASS_H_INCLUDED
 #define FIXEDP_CLASS_H_INCLUDED
 
+#include <iostream>
 #include "fixed_func.h"
 
-#define FRAC_MASK(p) ((2<<(p))-1)
+#define FRAC_MASK(p) ((1<<(p))-1)
 #define INT_MASK(p) ((-1)^FRAC_MASK(p))
 
 namespace fixedpoint {
@@ -54,6 +55,11 @@ struct fixed_point {
 	/*explicit*/ fixed_point(uint32_t i) : intValue(i << p) {}
 	/*explicit*/ fixed_point(float f) : intValue(float2fix<p>(f)) {}
 	/*explicit*/ fixed_point(double f) : intValue(float2fix<p>((float)f)) {}
+	static fixed_point<p> createRaw(const int32_t i) {
+		fixed_point<p> r;
+		r.intValue = i;
+		return r;
+	}
 	
 	fixed_point& operator += (fixed_point r) { intValue += r.intValue; return *this; }
 	fixed_point& operator -= (fixed_point r) { intValue -= r.intValue; return *this; }

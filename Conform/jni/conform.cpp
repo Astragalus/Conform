@@ -46,10 +46,10 @@ const char *bitmapFormatToString(const int fmt) {
 }
 
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y);
 }
 
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest) {
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y) {
 	LOGI("pullbackBitmaps called...");
 
 	int status = 0;
@@ -85,7 +85,7 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		return status;
 	}
 
-	const MoebiusTrans map(0.0f,1.0f,1.0f,0.0f);
+	const MoebiusTrans map(-x,-y,1.0f,0.0f,1.0f,0.0f,-x,y);
 	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height);
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
 	to.pullbackSampledBitmap(map,from);

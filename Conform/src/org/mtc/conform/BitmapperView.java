@@ -8,14 +8,22 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.InputDevice.MotionRange;
+import android.view.MotionEvent;
 import android.widget.ImageView;
 
 
 public class BitmapperView extends ImageView {
 
+	public static final String TAG = "BitmapperView";
+	
 	final private Bitmap m_srcImage;
 	
 	private Bitmap m_destImage = null;
+	
+	private volatile float m_x = 0.5f;
+	private volatile float m_y = 0.5f;
 	
 	public BitmapperView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -25,7 +33,7 @@ public class BitmapperView extends ImageView {
 			viewBitmap = ((BitmapDrawable)viewDrawable).getBitmap();
 		}
 		m_srcImage = viewBitmap != null ? Bitmap.createBitmap(viewBitmap) : BitmapFactory.decodeResource(getResources(), R.drawable.celtic);
-		setImageBitmap(map(getDestBitmap(m_srcImage.getWidth()/2, m_srcImage.getHeight()/2)));
+		setImageBitmap(map(getDestBitmap(256, 256)));
 	}
 	
 	@Override
@@ -47,8 +55,24 @@ public class BitmapperView extends ImageView {
 	}
 	
 	protected synchronized Bitmap map(final Bitmap destImage) {
-		ConformLib.get().pullbackBitmaps(m_srcImage, destImage);
+		ConformLib.get().pullbackBitmaps(m_srcImage, destImage, m_x, m_y);
 		return destImage;
+	}
+	
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+		case MotionEvent.ACTION_MOVE:
+			final MotionRange xMotionRange = event.getDevice().getMotionRange(MotionEvent.AXIS_X);
+			m_x = (event.getX() - xMotionRange.getMin())/xMotionRange.getRange();
+			final MotionRange yMotionRange = event.getDevice().getMotionRange(MotionEvent.AXIS_Y);
+			m_y = (event.getY() - yMotionRange.getMin())/yMotionRange.getRange();
+			this.invalidate();
+			Log.i(TAG,"Touch event, x="+m_x+",y="+m_y);
+			return true;
+		}
+		return super.onTouchEvent(event);
 	}
 
 }
