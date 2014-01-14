@@ -46,8 +46,8 @@ BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth,
 }
 //Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
 Pixel BitmapSampler::bilinearSample(const std::complex<fixed> &z) const {
-	const fixed xfix = frac(z.real())*fixed(m_srcWidth);
-	const fixed yfix = frac(z.imag())*fixed(m_srcHeight);
+	const fixed xfix = frac((z.real()+fixed(1))/fixed(2))*fixed(m_srcWidth);
+	const fixed yfix = frac((z.imag()+fixed(1))/fixed(2))*fixed(m_srcHeight);
 	const fixed tx = frac(xfix);
 	const fixed ty = frac(yfix);
 	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side
@@ -69,7 +69,7 @@ void MappedBitmap::pullbackSampledBitmap(const ComplexMap &map, const BitmapSamp
 	LOGI("pullbackSampledBitmap: m_destWidth=%d, m_destHeight=%d",m_destWidth, m_destHeight);
 	for (int v = 0; v < m_destHeight; ++v) {
 		for (int u = 0; u < m_destWidth; ++u) {
-			const std::complex<fixed> z(fixed(u)/fixed(m_destWidth),fixed(v)/fixed(m_destHeight));
+			const std::complex<fixed> z((fixed(2)*fixed(u)-fixed(1))/fixed(m_destWidth),(fixed(2)*fixed(v)-fixed(1))/fixed(m_destHeight));
 			const std::complex<fixed> w(map(z));
 			uint32_t &destPix = m_destPixels[v*m_destWidth+u];
 			src.bilinearSample(w).write(destPix); //sample color from src at map(z) and write to dest
@@ -84,6 +84,7 @@ MoebiusTrans::MoebiusTrans(const std::complex<fixed> &a, const std::complex<fixe
 }
 MoebiusTrans::MoebiusTrans(const float ar, const float ai, const float br, const float bi, const float ci, const float cr, const float dr, const float di) :
 		m_a(std::complex<fixed>(ar,ai)), m_b(std::complex<fixed>(br,bi)), m_c(std::complex<fixed>(cr,ci)), m_d(std::complex<fixed>(dr,di)) {
+	LOGI("Creating moebius trans: (%1.3f+%1.3fi) + (%1.3f+%1.3fi)z / (%1.3f+%1.3fi) + (%1.3f+%1.3fi)z",m_a.real().toFloat(),m_a.imag().toFloat(),m_b.real().toFloat(),m_b.imag().toFloat(),m_c.real().toFloat(),m_c.imag().toFloat(),m_d.real().toFloat(),m_d.imag().toFloat());
 }
 std::complex<fixed> MoebiusTrans::operator()(const std::complex<fixed> &z) const {
 	//return z - std::complex<fixed>(fixed::createRaw(0x8000),fixed::createRaw(0x8000));

@@ -5,10 +5,12 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.util.AndroidRuntimeException;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.InputDevice.MotionRange;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -57,6 +59,7 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 		
 		private void doDraw(Canvas c) {
 			Log.v(TAG,"drawing...");
+			m_drawnBitmap.eraseColor(Color.TRANSPARENT);
 			ConformLib.get().pullbackBitmaps(m_sourceBitmap, m_drawnBitmap, m_x, m_y);
 			c.drawBitmap(m_drawnBitmap, getMatrix(), null);
 		}
@@ -133,11 +136,17 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 	}
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		if (event.getAction() == MotionEvent.ACTION_DOWN) {
-			m_x = event.getX()/event.getDevice().getMotionRange(MotionEvent.AXIS_X).getRange();
-			m_y = event.getY()/event.getDevice().getMotionRange(MotionEvent.AXIS_Y).getRange();
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+		case MotionEvent.ACTION_MOVE:
+			final MotionRange xMotionRange = event.getDevice().getMotionRange(MotionEvent.AXIS_X);
+			m_x = 2.0f*(event.getX()-xMotionRange.getMin())/xMotionRange.getRange() - 1.0f;
+			final MotionRange yMotionRange = event.getDevice().getMotionRange(MotionEvent.AXIS_Y);
+			m_y = 2.0f*(event.getY()-yMotionRange.getMin())/yMotionRange.getRange() - 1.0f;
+			Log.d(TAG, "Touch received: m_x=" + m_x + ", m_y=" + m_y);
+			this.invalidate();
 			return true;
 		}
-		return false;
+		return super.onTouchEvent(event);
 	}
 }
