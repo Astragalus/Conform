@@ -41,8 +41,6 @@ Modified by Matthew Cushman in 2014
 #define FRAC_MASK(p) ((1<<(p))-1)
 #define INT_MASK(p) ((-1)^FRAC_MASK(p))
 
-namespace fixedpoint {
-
 // The template argument p in all of the following functions refers to the 
 // fixed point precision (e.g. p = 8 gives 24.8 fixed point functions).
 
@@ -55,11 +53,6 @@ struct fixed_point {
 	/*explicit*/ fixed_point(uint32_t i) : intValue(i << p) {}
 	/*explicit*/ fixed_point(float f) : intValue(float2fix<p>(f)) {}
 	/*explicit*/ fixed_point(double f) : intValue(float2fix<p>((float)f)) {}
-	static fixed_point<p> createRaw(const int32_t i) {
-		fixed_point<p> r;
-		r.intValue = i;
-		return r;
-	}
 	
 	fixed_point& operator += (fixed_point r) { intValue += r.intValue; return *this; }
 	fixed_point& operator -= (fixed_point r) { intValue -= r.intValue; return *this; }
@@ -207,8 +200,6 @@ inline fixed_point<p> multiply_accumulate(
 	r.intValue = static_cast<int>(result >> p);
 	return r;
 }
-
-} // end namespace fixedpoint
 
 #endif
 

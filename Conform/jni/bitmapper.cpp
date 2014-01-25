@@ -1,14 +1,19 @@
 #include "bitmapper.h"
 
+#include <iomanip>
 #include <android/log.h>
 #include <sstream>
 #include <complex>
 
-#include "fixedpoint/fixed_class.h"
+#include "fixed_class.h"
+#include "logstream.h"
 
 #define  LOG_TAG    "bitmapper"
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
-#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+
+using namespace std;
+
+static logstream<ANDROID_LOG_INFO> INFO(LOG_TAG);
+static logstream<ANDROID_LOG_DEBUG> DEBUG(LOG_TAG);
 
 //Construct a Pixel from a, r, g, and b values
 Pixel::Pixel(const uint32_t &a, const uint32_t &r, const uint32_t &g, const uint32_t &b) :
@@ -19,74 +24,89 @@ Pixel::Pixel(const uint32_t &pix) :
 		a((pix & 0xFF000000) >> 24), r((pix & 0x00FF0000) >> 16), g((pix & 0x0000FF00) >> 8), b(pix & 0x000000FF) {
 }
 //Construct a Pixel by linearly interpolating between two others
-Pixel::Pixel(const Pixel &p0, const Pixel &p1, const fixed &t) :
-		a((p0.a*(1-t) + p1.a*t).toUnsigned()), r((p0.r*(1-t) + p1.r*t).toUnsigned()), g((p0.g*(1-t) + p1.g*t).toUnsigned()), b((p0.b*(1-t) + p1.b*t).toUnsigned()) {
+Pixel Pixel::interp(const Pixel &p0, const Pixel &p1, const fixpoint &t) {
+	return Pixel((p0.a*(1-t) + p1.a*t).toUnsigned(),
+				 (p0.r*(1-t) + p1.r*t).toUnsigned(),
+				 (p0.g*(1-t) + p1.g*t).toUnsigned(),
+				 (p0.b*(1-t) + p1.b*t).toUnsigned());
 }
 //Write Pixel to an ARGB_8888 formatted destination
 void Pixel::write(uint32_t &dest) const {
 	dest |= a << 24 | r << 16 | g << 8 | b;
 }
 
-std::ostream& operator<<(std::ostream &os, const fixed& f) {
-	return os << f.toFloat();
+ostream& operator<<(ostream& os, const Pixel& p) {
+	return os << hex << '[' << p.a << ':' << p.r << ':' << p.g << ':' << p.b << ']';
 }
 
-std::ostream& operator<<(std::ostream &os, const Pixel &pix) {
-	return os << std::hex << '[' << pix.a << ':' << pix.r << ':' << pix.g << ':' << pix.b << ']';
-}
-
-std::ostream& operator<<(std::ostream &os, const std::complex<fixed> &z) {
-	return os << '(' << z.real() << '+' << z.imag() << "i)";
+ostream &operator<<(ostream &os, const fixed_point<16> &f) {
+	return os << setw(5) << f.toFloat();
 }
 
 //Construct an object representing a bitmap whose color can be sampled in various ways
 BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight) :
 	m_srcPixels(srcPixels), m_srcWidth(srcWidth), m_srcHeight(srcHeight) {
-	LOGI("BitmapSampler object created.  srcWidth = %d, srcHeight = %d",m_srcWidth,m_srcHeight);
 }
 //Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
-Pixel BitmapSampler::bilinearSample(const std::complex<fixed> &z) const {
-	const fixed xfix = frac((z.real()+fixed(1))/fixed(2))*fixed(m_srcWidth);
-	const fixed yfix = frac((z.imag()+fixed(1))/fixed(2))*fixed(m_srcHeight);
-	const fixed tx = frac(xfix);
-	const fixed ty = frac(yfix);
+Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
+	const fixpoint xfix = frac(w.real())*fixpoint(m_srcWidth-1); // (re(w) mod 1) * width
+	const fixpoint yfix = frac(w.imag())*fixpoint(m_srcHeight-1); // (im(w) mod 1) * height
+	const fixpoint tx = frac(xfix);
+	const fixpoint ty = frac(yfix);
 	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side
 	const uint32_t y0 = (yfix-ty).toUnsigned(); //y index of bottom (top?) side
-	const Pixel pixDown(Pixel(m_srcPixels[y0*m_srcWidth+x0]),Pixel(m_srcPixels[y0*m_srcWidth+x0+1]),tx); //bottom, interp'd in x
-	const Pixel pixUp(Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0]),Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0+1]),tx); //top, interp'd in x
-	const Pixel pixInterped(pixDown, pixUp, ty); //interp'd interp'ds
-	//LOGI("bilinearSample: x0=%d, y0=%d, tx=%1.4f, ty=%1.4f",x0,y0,tx.toFloat(),ty.toFloat());
+	const Pixel pixDown(Pixel::interp(Pixel(m_srcPixels[y0*m_srcWidth+x0]),Pixel(m_srcPixels[y0*m_srcWidth+x0+1]),tx)); //bottom, interp'd in x
+	const Pixel pixUp(Pixel::interp(Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0]), Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0+1]),tx)); //top, interp'd in x
+	const Pixel pixInterped(Pixel::interp(pixDown, pixUp, ty)); //interp'd interp'ds
 	return pixInterped;
 }
 
 
 MappedBitmap::MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight) :
 	m_destPixels(destPixels), m_destWidth(destWidth), m_destHeight(destHeight) {
-	LOGI("MappedBitmap object created.  destWidth = %d, destHeight = %d",m_destWidth,m_destHeight);
 }
 
-void MappedBitmap::pullbackSampledBitmap(const ComplexMap &map, const BitmapSampler &src) {
-	LOGI("pullbackSampledBitmap: m_destWidth=%d, m_destHeight=%d",m_destWidth, m_destHeight);
+void MappedBitmap::pullbackSampledBitmap(const MoebiusTrans &map, const BitmapSampler &src) {
 	for (int v = 0; v < m_destHeight; ++v) {
 		for (int u = 0; u < m_destWidth; ++u) {
-			const std::complex<fixed> z((fixed(2)*fixed(u)-fixed(1))/fixed(m_destWidth),(fixed(2)*fixed(v)-fixed(1))/fixed(m_destHeight));
-			const std::complex<fixed> w(map(z));
+			const complex<fixpoint> z(fixpoint(u)/fixpoint(m_destWidth-1), fixpoint(v)/fixpoint(m_destHeight-1));
+			const complex<fixpoint> w(map(z)); //The magic happens here...
 			uint32_t &destPix = m_destPixels[v*m_destWidth+u];
-			src.bilinearSample(w).write(destPix); //sample color from src at map(z) and write to dest
-			//LOGI("u=%d, v=%d, z=%1.4f+%1.4fi, w=%1.4f+%1.4fi, pix=%#010x",u,v,z.real().toFloat(),z.imag().toFloat(),w.real().toFloat(),w.imag().toFloat(),destPix);
+			const Pixel &sampledPixel = src.bilinearSample(w);
+			sampledPixel.write(destPix); //sample color from src at map(z) and write to dest
 		}
 	}
 }
 
-
-MoebiusTrans::MoebiusTrans(const std::complex<fixed> &a, const std::complex<fixed> &b, const std::complex<fixed> &c, const std::complex<fixed> &d) :
+MoebiusTrans::MoebiusTrans(const complex<fixpoint> &a, const complex<fixpoint> &b, const complex<fixpoint> &c, const complex<fixpoint> &d) :
 		m_a(a), m_b(b), m_c(c), m_d(d) {
 }
-MoebiusTrans::MoebiusTrans(const float ar, const float ai, const float br, const float bi, const float ci, const float cr, const float dr, const float di) :
-		m_a(std::complex<fixed>(ar,ai)), m_b(std::complex<fixed>(br,bi)), m_c(std::complex<fixed>(cr,ci)), m_d(std::complex<fixed>(dr,di)) {
-	LOGI("Creating moebius trans: (%1.3f+%1.3fi) + (%1.3f+%1.3fi)z / (%1.3f+%1.3fi) + (%1.3f+%1.3fi)z",m_a.real().toFloat(),m_a.imag().toFloat(),m_b.real().toFloat(),m_b.imag().toFloat(),m_c.real().toFloat(),m_c.imag().toFloat(),m_d.real().toFloat(),m_d.imag().toFloat());
+complex<fixpoint> MoebiusTrans::operator()(const complex<fixpoint> &z) const {
+	const complex<fixpoint> numer(m_a*z+m_b);
+	const complex<fixpoint> denom(m_c*z+m_d);
+	if (norm(denom) != 0) {
+		return numer/denom;
+	} else {
+		return complex<fixpoint>(0,0);
+	}
 }
-std::complex<fixed> MoebiusTrans::operator()(const std::complex<fixed> &z) const {
-	//return z - std::complex<fixed>(fixed::createRaw(0x8000),fixed::createRaw(0x8000));
-	return (m_a*z+m_b)/(m_c*z+m_d);
+const MoebiusTrans MoebiusTrans::inv() const {
+	const complex<fixpoint> det(m_a*m_d-m_b*m_c);
+	if (norm(det) != 0) {
+		return MoebiusTrans(m_d/det, -m_b/det, -m_c/det, m_a/det);
+	} else {
+		return identity();
+	}
+}
+
+MoebiusTrans MoebiusTrans::identity() {
+	return MoebiusTrans(complex<fixpoint>(1,0),complex<fixpoint>(0,0),complex<fixpoint>(0,0),complex<fixpoint>(1,0));
+}
+
+const MoebiusTrans operator*(const MoebiusTrans &f, const MoebiusTrans &g) {
+	return MoebiusTrans(f.m_a*g.m_a+f.m_b*g.m_c, f.m_a*g.m_b+f.m_b*g.m_d, f.m_c*g.m_a+f.m_d*g.m_c, f.m_c*g.m_b+f.m_d*g.m_d);
+}
+
+ostream &operator<<(ostream &os, const MoebiusTrans &mt) {
+	return os << "(" << mt.m_a << "z+" << mt.m_b << ")/(" << mt.m_c << "z+" << mt.m_d << ")";
 }

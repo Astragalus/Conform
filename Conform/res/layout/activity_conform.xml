@@ -18,7 +18,7 @@
          android:fitsSystemWindows.
     -->
 
-    <org.mtc.conform.PlaneView
+    <org.mtc.conform.BitmapperView
         android:id="@+id/planeView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"

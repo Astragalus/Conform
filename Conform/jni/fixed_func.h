@@ -40,14 +40,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #endif
 
-//#ifndef _MSC_VER
-//#include <stdint.h>
-//#else
-//#include "stdint.h"
-//#endif
-
-namespace fixedpoint {
-
 // The template argument p in all of the following functions refers to the 
 // fixed point precision (e.g. p = 8 gives 24.8 fixed point functions).
 
@@ -71,7 +63,7 @@ inline int32_t fixmul(int32_t a, int32_t b)
 template <int p>
 inline int fixdiv(int32_t a, int32_t b)
 {
-#if 0
+#if 1
 	return (int32_t)((((int64_t)a) << p) / b);
 #else	
 	// The following produces the same results as the above but gcc 4.0.3 
@@ -178,7 +170,5 @@ int32_t float2fix(float f)
 //int32_t fixsin16(int32_t a);
 //int32_t fixrsqrt16(int32_t a);
 //int32_t fixsqrt16(int32_t a);
-
-} // end namespace fixedpoint
 
 #endif

@@ -1,12 +1,14 @@
 #include <jni.h>
 #include <android/bitmap.h>
-#include <android/log.h>
 
+#include "logstream.h"
 #include "bitmapper.h"
 
 #define  LOG_TAG    "conform"
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
-#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+
+static logstream<ANDROID_LOG_INFO> INFO(LOG_TAG);
+static logstream<ANDROID_LOG_DEBUG> DEBUG(LOG_TAG);
+static logstream<ANDROID_LOG_ERROR> ERROR(LOG_TAG);
 
 #define ANDROID_BITMAP_RESULT_SUCCESS            0
 #define ANDROID_BITMAP_RESULT_BAD_PARAMETER     -1
@@ -50,55 +52,62 @@ extern "C" {
 }
 
 JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y) {
-	LOGI("pullbackBitmaps called...");
+	INFO << "pullbackBitmaps called..." << endl;
 
 	int status = 0;
 
 	AndroidBitmapInfo sourceInfo;
 	status = AndroidBitmap_getInfo(env, bmSource, &sourceInfo);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		LOGE("AndroidBitmap_getInfo failed for source bm: %s",bitmapStatusToString(status));
+		ERROR << "AndroidBitmap_getInfo failed for source bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
 	if (sourceInfo.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-		LOGE("Source bitmap format is not 8888 - format: %s",bitmapFormatToString(sourceInfo.format));
+		ERROR << "Source bitmap format is not 8888 - format: " << bitmapFormatToString(sourceInfo.format) << endl;
 	}
 	uint32_t *sourcePtr;
 	status = AndroidBitmap_lockPixels(env, bmSource, (void **) &sourcePtr);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		LOGE("AndroidBitmap_lockPixels failed for source bm: %s",bitmapStatusToString(status));
+		ERROR << "AndroidBitmap_lockPixels failed for source bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
 	AndroidBitmapInfo destInfo;
 	status = AndroidBitmap_getInfo(env, bmDest, &destInfo);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		LOGE("AndroidBitmap_getInfo failed for dest bm: %s",bitmapStatusToString(status));
+		ERROR << "AndroidBitmap_getInfo failed for dest bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
 	if (destInfo.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-		LOGE("Dest bitmap format is not 8888 - format: %s",bitmapFormatToString(destInfo.format));
+		ERROR << "Dest bitmap format is not 8888 - format: " << bitmapFormatToString(destInfo.format) << endl;
 	}
 	uint32_t *destPtr;
 	status = AndroidBitmap_lockPixels(env, bmDest, (void **) &destPtr);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		LOGE("AndroidBitmap_lockPixels failed for dest bm: %s",bitmapStatusToString(status));
+		ERROR << "AndroidBitmap_lockPixels failed for dest bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
 
-	const MoebiusTrans map(-x,-y,1.0f,0.0f,1.0f,0.0f,-x,y);
 	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height);
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
-	to.pullbackSampledBitmap(map,from);
+
+	const MoebiusTrans scale(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
+	const complex<fixpoint> a(scale(complex<fixpoint>(x,y)));
+	const MoebiusTrans blaschke(complex<fixpoint>(1,0),-a,-conj(a),complex<fixpoint>(1,0));
+//	const MoebiusTrans translate(complex<fixpoint>(1,0),-a,complex<fixpoint>(0,0),complex<fixpoint>(1,0));
+
+	const MoebiusTrans map(scale.inv()*blaschke*scale);
+
+	to.pullbackSampledBitmap(map, from);
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		LOGE("AndroidBitmap_unlockPixels failed for source bm: %s",bitmapStatusToString(status));
+		ERROR << "AndroidBitmap_unlockPixels failed for source bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
 
 	status = AndroidBitmap_unlockPixels(env, bmDest);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		LOGE("AndroidBitmap_unlockPixels failed for dest bm: %s",bitmapStatusToString(status));
+		ERROR << "AndroidBitmap_unlockPixels failed for dest bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
 	return status;
