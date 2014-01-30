@@ -52,8 +52,6 @@ extern "C" {
 }
 
 JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y) {
-	INFO << "pullbackBitmaps called..." << endl;
-
 	int status = 0;
 
 	AndroidBitmapInfo sourceInfo;
@@ -96,7 +94,6 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 //	const MoebiusTrans translate(complex<fixpoint>(1,0),-a,complex<fixpoint>(0,0),complex<fixpoint>(1,0));
 
 	const MoebiusTrans map(scale.inv()*blaschke*scale);
-
 	to.pullbackSampledBitmap(map, from);
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);

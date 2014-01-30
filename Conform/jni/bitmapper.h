@@ -23,7 +23,6 @@ public:
 	//Construct a Pixel from an ARGB_8888 formatted pixel
 	explicit Pixel(const uint32_t &pix);
 	//Construct a Pixel by linearly interpolating between two others
-	//explicit Pixel(const Pixel &p0, const Pixel &p1, const fixpoint &t);
 	static Pixel interp(const Pixel &p0, const Pixel &p1, const fixpoint &t);
 	//Write Pixel to an ARGB_8888 formatted destination
 	void write(uint32_t &dest) const;
@@ -36,7 +35,6 @@ private:
 };
 
 ostream &operator<<(ostream &os, const fixed_point<16> &f);
-
 
 class BitmapSampler {
 public:

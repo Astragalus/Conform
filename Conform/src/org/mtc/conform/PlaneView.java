@@ -51,7 +51,6 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 						m_drawnBitmap.recycle();
 					}
 					m_drawnBitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
-					
 				}
 			}
 		}

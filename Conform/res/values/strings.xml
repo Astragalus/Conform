@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">Conform</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="menu_item_load_image">Load Image</string>
     <string name="default_bitmap_desc">Default bitmap image representing the complex plane</string>
-
 </resources>

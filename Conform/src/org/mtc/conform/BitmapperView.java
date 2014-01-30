@@ -5,11 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.InputDevice.MotionRange;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
@@ -18,12 +17,16 @@ public class BitmapperView extends ImageView {
 
 	public static final String TAG = "BitmapperView";
 	
-	final private Bitmap m_srcImage;
+	private Bitmap m_srcImage;
 	
 	private Bitmap m_destImage = null;
 	
-	private volatile float m_x = 0.5f;
-	private volatile float m_y = 0.5f;
+	private int m_destWidth = 256;
+	private int m_destHeight = 256;
+	
+	private Matrix m_screenToUnitSquareMatrix = new Matrix();
+	
+	private float[] pos = new float[] {0.5f, 0.5f};
 	
 	public BitmapperView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -32,33 +35,38 @@ public class BitmapperView extends ImageView {
 		if (viewDrawable != null && viewDrawable instanceof BitmapDrawable) {
 			viewBitmap = ((BitmapDrawable)viewDrawable).getBitmap();
 		}
-		m_srcImage = viewBitmap != null ? Bitmap.createBitmap(viewBitmap) : BitmapFactory.decodeResource(getResources(), R.drawable.celtic);
+		setSourceBitmap(viewBitmap != null ? Bitmap.createBitmap(viewBitmap) : BitmapFactory.decodeResource(getResources(), R.drawable.celtic));
+		m_destImage = Bitmap.createBitmap(m_destWidth, m_destHeight, Config.ARGB_8888);
+		setImageBitmap(m_destImage);
 	}
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
-		setImageBitmap(map(getDestBitmap(256, 256)));
-		super.onDraw(canvas);
+		m_destImage.eraseColor(0);
+		ConformLib.get().pullbackBitmaps(m_srcImage, m_destImage, pos[0], pos[1]);
+		canvas.drawBitmap(m_destImage, getImageMatrix(), null);
 	}
 	
-	protected synchronized Bitmap getDestBitmap(final int w, final int h) {
-		if (m_destImage != null) {
-			if (m_destImage.getWidth() != w || m_destImage.getHeight() != h) {
-				m_destImage.recycle();
-				m_destImage = null;
-			} else {
-				m_destImage.eraseColor(0);
-			}
-		}
-		if (m_destImage == null) {
-			m_destImage = Bitmap.createBitmap(w, h, Config.ARGB_8888);
-		}
-		return m_destImage;
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+		super.onSizeChanged(w, h, oldw, oldh);
+		m_screenToUnitSquareMatrix.reset();
 	}
 	
-	protected synchronized Bitmap map(final Bitmap destImage) {
-		ConformLib.get().pullbackBitmaps(m_srcImage, destImage, m_x, m_y);
-		return destImage;
+	public void setSourceBitmap(final Bitmap sourceBitmap) {
+		m_srcImage = sourceBitmap;
+		m_screenToUnitSquareMatrix.reset();
+		pos[0] = 0.5f;
+		pos[1] = 0.5f;
+		invalidate();
+	}
+	
+	private Matrix getScreenToUnitSquareMatrix() {
+		if (m_screenToUnitSquareMatrix.isIdentity()) {
+			getImageMatrix().invert(m_screenToUnitSquareMatrix);
+			m_screenToUnitSquareMatrix.postScale(1.0f/m_destWidth, 1.0f/m_destHeight);
+		}
+		return m_screenToUnitSquareMatrix;
 	}
 	
 	@Override
@@ -66,12 +74,10 @@ public class BitmapperView extends ImageView {
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 		case MotionEvent.ACTION_MOVE:
-			final MotionRange xMotionRange = event.getDevice().getMotionRange(MotionEvent.AXIS_X);
-			m_x = (event.getX() - xMotionRange.getMin())/xMotionRange.getRange();
-			final MotionRange yMotionRange = event.getDevice().getMotionRange(MotionEvent.AXIS_Y);
-			m_y = (event.getY() - yMotionRange.getMin())/yMotionRange.getRange();
-			this.invalidate();
-			Log.i(TAG,"Touch event, x="+m_x+",y="+m_y);
+			pos[0] = event.getX();
+			pos[1] = event.getY();
+			getScreenToUnitSquareMatrix().mapPoints(pos);
+			invalidate();
 			return true;
 		}
 		return super.onTouchEvent(event);
