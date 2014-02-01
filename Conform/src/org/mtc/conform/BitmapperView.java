@@ -3,11 +3,9 @@ package org.mtc.conform;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.ImageView;
@@ -17,9 +15,9 @@ public class BitmapperView extends ImageView {
 
 	public static final String TAG = "BitmapperView";
 	
-	private Bitmap m_srcImage;
+	private Bitmap m_srcBitmap;
 	
-	private Bitmap m_destImage = null;
+	private Bitmap m_destBitmap = null;
 	
 	private int m_destWidth = 256;
 	private int m_destHeight = 256;
@@ -30,21 +28,16 @@ public class BitmapperView extends ImageView {
 	
 	public BitmapperView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		final Drawable viewDrawable = getDrawable();
-		Bitmap viewBitmap = null;
-		if (viewDrawable != null && viewDrawable instanceof BitmapDrawable) {
-			viewBitmap = ((BitmapDrawable)viewDrawable).getBitmap();
-		}
-		setSourceBitmap(viewBitmap != null ? Bitmap.createBitmap(viewBitmap) : BitmapFactory.decodeResource(getResources(), R.drawable.celtic));
-		m_destImage = Bitmap.createBitmap(m_destWidth, m_destHeight, Config.ARGB_8888);
-		setImageBitmap(m_destImage);
+		setSourceBitmap(((BitmapDrawable) getDrawable()).getBitmap());
+		m_destBitmap = Bitmap.createBitmap(m_destWidth, m_destHeight, Config.ARGB_8888);
+		setImageBitmap(m_destBitmap);
 	}
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
-		m_destImage.eraseColor(0);
-		ConformLib.get().pullbackBitmaps(m_srcImage, m_destImage, pos[0], pos[1]);
-		canvas.drawBitmap(m_destImage, getImageMatrix(), null);
+		m_destBitmap.eraseColor(0);
+		ConformLib.get().pullbackBitmaps(m_srcBitmap, m_destBitmap, pos[0], pos[1], ConformLib.TILE);
+		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
 	}
 	
 	@Override
@@ -54,7 +47,7 @@ public class BitmapperView extends ImageView {
 	}
 	
 	public void setSourceBitmap(final Bitmap sourceBitmap) {
-		m_srcImage = sourceBitmap;
+		m_srcBitmap = sourceBitmap;
 		m_screenToUnitSquareMatrix.reset();
 		pos[0] = 0.5f;
 		pos[1] = 0.5f;

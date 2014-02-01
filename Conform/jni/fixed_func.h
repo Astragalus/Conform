@@ -36,10 +36,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef FIXEDP_FUNC_H_INCLUDED
 #define FIXEDP_FUNC_H_INCLUDED
 
-#ifdef _MSC_VER
-#pragma once
-#endif
-
 // The template argument p in all of the following functions refers to the 
 // fixed point precision (e.g. p = 8 gives 24.8 fixed point functions).
 

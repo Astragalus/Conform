@@ -17,5 +17,9 @@ public class ConformLib {
 		return lib;
 	}
 	
-	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo, float x, float y);
+	//Boundary Treatments
+	public static final int TILE = 0; 
+	public static final int CLAMP = 1; 
+	
+	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo, float x, float y, int boundaryTreatment);
 }

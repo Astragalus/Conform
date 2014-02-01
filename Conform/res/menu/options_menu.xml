@@ -4,4 +4,16 @@
         android:id="@+id/loadImage"
         android:title="@string/menu_item_load_image">
     </item>
+    <item
+        android:id="@+id/shouldTile"
+        android:title="@string/menu_item_should_tile"
+        android:checkable="true"
+        android:checked="true">
+    </item>
+    <item
+        android:id="@+id/shouldClamp"
+        android:title="@string/menu_item_should_clamp"
+        android:checkable="true"
+        android:checked="false">
+    </item>
 </menu>

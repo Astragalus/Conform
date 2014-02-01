@@ -12,9 +12,17 @@
 #include <complex>
 #include "fixed_class.h"
 
+//Boundary treatment
+#define TILE 0
+#define CLAMP 1
+
 using namespace std;
 
 typedef fixed_point<16> fixpoint;
+
+static inline bool isZero(const complex<fixpoint> &z) {
+	return (!z.real() && !z.imag());
+}
 
 class Pixel {
 public:
@@ -39,13 +47,16 @@ ostream &operator<<(ostream &os, const fixed_point<16> &f);
 class BitmapSampler {
 public:
 	//Construct an object representing a bitmap whose color can be sampled in various ways
-	BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight);
+	BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int boundaryTreatment);
 	//Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
 	Pixel bilinearSample(const complex<fixpoint> &w) const;
 private:
 	const uint32_t *m_srcPixels;
 	const uint32_t m_srcWidth;
 	const uint32_t m_srcHeight;
+	const fixpoint m_xMult;
+	const fixpoint m_yMult;
+	const int m_boundaryTreatment;
 };
 
 class MoebiusTrans {
@@ -71,6 +82,8 @@ private:
 	uint32_t *m_destPixels;
 	const int m_destWidth;
 	const int m_destHeight;
+	const fixpoint m_reInc;
+	const fixpoint m_imInc;
 };
 
 #endif /* BITMAPPER_H_ */

@@ -74,6 +74,7 @@ struct fixed_point {
 	bool operator >  (fixed_point r) const { return intValue > r.intValue; }
 	bool operator <= (fixed_point r) const { return intValue <= r.intValue; }
 	bool operator >= (fixed_point r) const { return intValue >= r.intValue; }
+	bool operator ! () const { return !intValue; }
 
 	fixed_point operator + (int32_t r) const { fixed_point x = *this; x += r; return x;}
 	fixed_point operator - (int32_t r) const { fixed_point x = *this; x -= r; return x;}
@@ -83,6 +84,15 @@ struct fixed_point {
 	float toFloat() const { return fix2float<p>(intValue); }
 	uint32_t toUnsigned() const { return ((uint32_t)intValue) >> p; }
 };
+
+// Perform a fixed point interpolation using a 64-bit intermediate result to
+// prevent overflow problems.
+template <int p>
+inline uint32_t interp(uint32_t a, uint32_t b, fixed_point<p> t)
+{
+	return (uint32_t)((((uint64_t)a)*((uint64_t)(1 - t).intValue) + ((uint64_t)b)*((uint64_t)t.intValue)) >> p);
+}
+
 
 // Specializations for use with plain integers
 template <int p>
@@ -128,7 +138,7 @@ inline fixed_point<p> abs(fixed_point<p> a)
 }
 
 template <int p>
-inline fixed_point<p> trunc(fixed_point<p> a)
+inline fixed_point<p> trunc(const fixed_point<p> a)
 {
 	fixed_point<p> r;
 	r.intValue = a.intValue & INT_MASK(p);
@@ -136,13 +146,39 @@ inline fixed_point<p> trunc(fixed_point<p> a)
 }
 
 template <int p>
-inline fixed_point<p> frac(fixed_point<p> a)
+inline fixed_point<p> frac(const fixed_point<p> a)
 {
 	fixed_point<p> r;
 	r.intValue = a.intValue & FRAC_MASK(p);
 	return r;
 }
 
+template <int p>
+inline fixed_point<p> mod(const fixed_point<p> a, const fixed_point<p> modulus)
+{
+	fixed_point<p> r;
+	r.intValue = ((uint32_t)a.intValue) % ((uint32_t)modulus.intValue);
+	return r;
+}
+
+template <int p>
+inline fixed_point<p> clamp(fixed_point<p> a, fixed_point<p> modulus)
+{
+	fixed_point<p> r;
+	r.intValue = a.intValue;
+	if (r.intValue > (1<<p))
+		r.intValue = (1<<p);
+	else if (r.intValue < 0)
+		r.intValue =0;
+	return r;
+}
+
+template <int p>
+inline fixed_point<p> fixinterp(fixed_point<p> a, fixed_point<p> b, fixed_point<p> t) {
+	fixed_point<p> r;
+	r.intValue = fixinterp(a.intValue, b.intValue, t);
+	return r;
+}
 // specializations for 16.16 format
 
 //template <>

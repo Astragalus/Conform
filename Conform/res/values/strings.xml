@@ -2,5 +2,7 @@
 <resources>
     <string name="app_name">Conform</string>
     <string name="menu_item_load_image">Load Image</string>
+    <string name="menu_item_should_tile">Tile</string>
+    <string name="menu_item_should_clamp">Clamp</string>
     <string name="default_bitmap_desc">Default bitmap image representing the complex plane</string>
 </resources>

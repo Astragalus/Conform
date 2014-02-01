@@ -44,13 +44,16 @@ ostream &operator<<(ostream &os, const fixed_point<16> &f) {
 }
 
 //Construct an object representing a bitmap whose color can be sampled in various ways
-BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight) :
-	m_srcPixels(srcPixels), m_srcWidth(srcWidth), m_srcHeight(srcHeight) {
+BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int boundaryTreatment) :
+	m_srcPixels(srcPixels), m_srcWidth(srcWidth), m_srcHeight(srcHeight),
+	m_xMult(srcWidth<srcHeight?fixpoint(srcHeight)/fixpoint(srcWidth):fixpoint(1)),
+	m_yMult(srcWidth>srcHeight?fixpoint(srcWidth)/fixpoint(srcHeight):fixpoint(1)),
+	m_boundaryTreatment(boundaryTreatment) {
 }
 //Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
 Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
-	const fixpoint xfix = frac(w.real())*fixpoint(m_srcWidth-1); // (re(w) mod 1) * width
-	const fixpoint yfix = frac(w.imag())*fixpoint(m_srcHeight-1); // (im(w) mod 1) * height
+	const fixpoint xfix = frac(w.real()*m_xMult)*fixpoint(m_srcWidth-1);
+	const fixpoint yfix = frac(w.imag()*m_yMult)*fixpoint(m_srcHeight-1);
 	const fixpoint tx = frac(xfix);
 	const fixpoint ty = frac(yfix);
 	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side
@@ -63,18 +66,20 @@ Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
 
 
 MappedBitmap::MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight) :
-	m_destPixels(destPixels), m_destWidth(destWidth), m_destHeight(destHeight) {
+	m_destPixels(destPixels), m_destWidth(destWidth), m_destHeight(destHeight),
+	m_reInc(fixpoint(1)/fixpoint(m_destWidth-1)), m_imInc(fixpoint(1)/fixpoint(m_destHeight-1)){
 }
 
 void MappedBitmap::pullbackSampledBitmap(const MoebiusTrans &map, const BitmapSampler &src) {
+	fixpoint zim(0);
 	for (int v = 0; v < m_destHeight; ++v) {
+		fixpoint zre(0);
 		for (int u = 0; u < m_destWidth; ++u) {
-			const complex<fixpoint> z(fixpoint(u)/fixpoint(m_destWidth-1), fixpoint(v)/fixpoint(m_destHeight-1));
-			const complex<fixpoint> w(map(z)); //The magic happens here...
-			uint32_t &destPix = m_destPixels[v*m_destWidth+u];
-			const Pixel &sampledPixel = src.bilinearSample(w);
-			sampledPixel.write(destPix); //sample color from src at map(z) and write to dest
+			const complex<fixpoint> z(zre,zim);
+			src.bilinearSample(map(z)).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
+			zre += m_reInc;
 		}
+		zim += m_imInc;
 	}
 }
 
@@ -84,7 +89,7 @@ MoebiusTrans::MoebiusTrans(const complex<fixpoint> &a, const complex<fixpoint> &
 complex<fixpoint> MoebiusTrans::operator()(const complex<fixpoint> &z) const {
 	const complex<fixpoint> numer(m_a*z+m_b);
 	const complex<fixpoint> denom(m_c*z+m_d);
-	if (norm(denom) != 0) {
+	if (!isZero(denom)) {
 		return numer/denom;
 	} else {
 		return complex<fixpoint>(0,0);
@@ -92,7 +97,7 @@ complex<fixpoint> MoebiusTrans::operator()(const complex<fixpoint> &z) const {
 }
 const MoebiusTrans MoebiusTrans::inv() const {
 	const complex<fixpoint> det(m_a*m_d-m_b*m_c);
-	if (norm(det) != 0) {
+	if (!isZero(det)) {
 		return MoebiusTrans(m_d/det, -m_b/det, -m_c/det, m_a/det);
 	} else {
 		return identity();
