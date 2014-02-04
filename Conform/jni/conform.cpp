@@ -48,10 +48,10 @@ const char *bitmapFormatToString(const int fmt) {
 }
 
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jint boundaryTreatment);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jint wrapMode);
 }
 
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jint boundaryTreatment) {
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jint wrapMode) {
 	int status = 0;
 
 	AndroidBitmapInfo sourceInfo;
@@ -85,7 +85,7 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		return status;
 	}
 
-	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, boundaryTreatment);
+	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
 	const MoebiusTrans scale(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
 	const complex<fixpoint> a(scale(complex<fixpoint>(x,y)));

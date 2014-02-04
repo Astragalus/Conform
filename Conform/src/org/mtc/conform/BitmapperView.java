@@ -15,8 +15,7 @@ public class BitmapperView extends ImageView {
 
 	public static final String TAG = "BitmapperView";
 	
-	private Bitmap m_srcBitmap;
-	
+	private Bitmap m_srcBitmap;	
 	private Bitmap m_destBitmap = null;
 	
 	private int m_destWidth = 256;
@@ -25,6 +24,11 @@ public class BitmapperView extends ImageView {
 	private Matrix m_screenToUnitSquareMatrix = new Matrix();
 	
 	private float[] pos = new float[] {0.5f, 0.5f};
+	
+	private int m_wrapMode = ConformLib.TILE;
+	
+	long start;
+	int count;
 	
 	public BitmapperView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -36,7 +40,15 @@ public class BitmapperView extends ImageView {
 	@Override
 	protected void onDraw(Canvas canvas) {
 		m_destBitmap.eraseColor(0);
-		ConformLib.get().pullbackBitmaps(m_srcBitmap, m_destBitmap, pos[0], pos[1], ConformLib.TILE);
+//		if (count == 0)
+//			start = System.currentTimeMillis();
+		ConformLib.get().pullbackBitmaps(m_srcBitmap, m_destBitmap, pos[0], pos[1], m_wrapMode);
+//		if (System.currentTimeMillis()-start < 1000) {
+//			++count;
+//		} else {
+//			Log.i(TAG,String.format("fps: %2d", count));
+//			count = 0;
+//		}
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
 	}
 	
@@ -51,6 +63,11 @@ public class BitmapperView extends ImageView {
 		m_screenToUnitSquareMatrix.reset();
 		pos[0] = 0.5f;
 		pos[1] = 0.5f;
+		invalidate();
+	}
+	
+	public void setWrapMode(final int wrapMode) {
+		m_wrapMode = wrapMode;
 		invalidate();
 	}
 	

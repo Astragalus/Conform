@@ -44,16 +44,16 @@ ostream &operator<<(ostream &os, const fixed_point<16> &f) {
 }
 
 //Construct an object representing a bitmap whose color can be sampled in various ways
-BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int boundaryTreatment) :
+BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int wrapMode) :
 	m_srcPixels(srcPixels), m_srcWidth(srcWidth), m_srcHeight(srcHeight),
 	m_xMult(srcWidth<srcHeight?fixpoint(srcHeight)/fixpoint(srcWidth):fixpoint(1)),
 	m_yMult(srcWidth>srcHeight?fixpoint(srcWidth)/fixpoint(srcHeight):fixpoint(1)),
-	m_boundaryTreatment(boundaryTreatment) {
+	m_wrapMode(wrapMode) {
 }
 //Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
 Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
-	const fixpoint xfix = frac(w.real()*m_xMult)*fixpoint(m_srcWidth-1);
-	const fixpoint yfix = frac(w.imag()*m_yMult)*fixpoint(m_srcHeight-1);
+	const fixpoint xfix = ((m_wrapMode == TILE)?frac(w.real()*m_xMult):clamp(w.real()*m_xMult))*fixpoint(m_srcWidth-1);
+	const fixpoint yfix = ((m_wrapMode == TILE)?frac(w.imag()*m_yMult):clamp(w.imag()*m_yMult))*fixpoint(m_srcHeight-1);
 	const fixpoint tx = frac(xfix);
 	const fixpoint ty = frac(yfix);
 	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side

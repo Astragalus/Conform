@@ -26,8 +26,9 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     public static final class id {
         public static final int loadImage=0x7f080001;
         public static final int planeView=0x7f080000;
-        public static final int shouldClamp=0x7f080003;
-        public static final int shouldTile=0x7f080002;
+        public static final int shouldClamp=0x7f080004;
+        public static final int shouldTile=0x7f080003;
+        public static final int wrappingModes=0x7f080002;
     }
     public static final class layout {
         public static final int activity_conform=0x7f030000;

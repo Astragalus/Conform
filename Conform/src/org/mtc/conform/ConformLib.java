@@ -21,5 +21,5 @@ public class ConformLib {
 	public static final int TILE = 0; 
 	public static final int CLAMP = 1; 
 	
-	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo, float x, float y, int boundaryTreatment);
+	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo, float x, float y, int wrapMode);
 }

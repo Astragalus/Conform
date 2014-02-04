@@ -38,8 +38,20 @@ public class ConformActivity extends Activity {
     		imagePickIntent.setType("image/*");
     		startActivityForResult(imagePickIntent, IMAGE_PICK);
     		return true;
+    	case R.id.shouldTile:
+    		if (!item.isChecked()) {
+				final View planeView = findViewById(R.id.planeView);
+				((BitmapperView)planeView).setWrapMode(ConformLib.TILE);
+    		}
+			return true;
+    	case R.id.shouldClamp:
+    		if (!item.isChecked()) {
+    			final View planeView = findViewById(R.id.planeView);
+    			((BitmapperView)planeView).setWrapMode(ConformLib.CLAMP);
+    		}
+    		return true;
     	}
-    	return false;
+    	return super.onOptionsItemSelected(item);
     }
     
     @Override

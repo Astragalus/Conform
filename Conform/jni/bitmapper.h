@@ -47,7 +47,7 @@ ostream &operator<<(ostream &os, const fixed_point<16> &f);
 class BitmapSampler {
 public:
 	//Construct an object representing a bitmap whose color can be sampled in various ways
-	BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int boundaryTreatment);
+	BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int wrapMode);
 	//Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
 	Pixel bilinearSample(const complex<fixpoint> &w) const;
 private:
@@ -56,7 +56,7 @@ private:
 	const uint32_t m_srcHeight;
 	const fixpoint m_xMult;
 	const fixpoint m_yMult;
-	const int m_boundaryTreatment;
+	const int m_wrapMode;
 };
 
 class MoebiusTrans {

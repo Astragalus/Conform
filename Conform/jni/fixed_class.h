@@ -162,14 +162,10 @@ inline fixed_point<p> mod(const fixed_point<p> a, const fixed_point<p> modulus)
 }
 
 template <int p>
-inline fixed_point<p> clamp(fixed_point<p> a, fixed_point<p> modulus)
+inline fixed_point<p> clamp(fixed_point<p> a)
 {
 	fixed_point<p> r;
-	r.intValue = a.intValue;
-	if (r.intValue > (1<<p))
-		r.intValue = (1<<p);
-	else if (r.intValue < 0)
-		r.intValue =0;
+	r.intValue = a.intValue > (1<<p)?(1<<p):(a.intValue < 0?0:a.intValue);
 	return r;
 }
 
