@@ -40,12 +40,14 @@ public class ConformActivity extends Activity {
     		return true;
     	case R.id.shouldTile:
     		if (!item.isChecked()) {
+    			item.setChecked(true);
 				final View planeView = findViewById(R.id.planeView);
 				((BitmapperView)planeView).setWrapMode(ConformLib.TILE);
     		}
 			return true;
     	case R.id.shouldClamp:
     		if (!item.isChecked()) {
+    			item.setChecked(true);
     			final View planeView = findViewById(R.id.planeView);
     			((BitmapperView)planeView).setWrapMode(ConformLib.CLAMP);
     		}
