@@ -8,6 +8,7 @@ import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.widget.ImageView;
 
 
@@ -25,7 +26,14 @@ public class BitmapperView extends ImageView {
 	
 	private float[] pos = new float[] {0.5f, 0.5f};
 	
-	private int m_wrapMode = ConformLib.TILE;
+	private ConformLib.WrapMode m_wrapMode = ConformLib.WrapMode.TILE;
+	
+	private ScaleGestureDetector m_scaleGestureDetector;
+
+	
+	private float[] panCurr = new float[] {0.0f, 0.0f};
+
+	private float m_scaleFac = 1.0f;
 	
 	long start;
 	int count;
@@ -35,6 +43,20 @@ public class BitmapperView extends ImageView {
 		setSourceBitmap(((BitmapDrawable) getDrawable()).getBitmap());
 		m_destBitmap = Bitmap.createBitmap(m_destWidth, m_destHeight, Config.ARGB_8888);
 		setImageBitmap(m_destBitmap);
+		m_scaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.OnScaleGestureListener(){
+			@Override
+			public boolean onScaleBegin(ScaleGestureDetector detector) {
+				return true;
+			}
+			@Override
+			public boolean onScale(ScaleGestureDetector detector) {
+				m_scaleFac *= detector.getScaleFactor();
+				return true;
+			}
+			@Override
+			public void onScaleEnd(ScaleGestureDetector detector) {
+			}
+		});
 	}
 	
 	@Override
@@ -42,7 +64,7 @@ public class BitmapperView extends ImageView {
 		m_destBitmap.eraseColor(0);
 //		if (count == 0)
 //			start = System.currentTimeMillis();
-		ConformLib.get().pullbackBitmaps(m_srcBitmap, m_destBitmap, pos[0], pos[1], m_wrapMode);
+		ConformLib.get().pullbackBitmaps(m_srcBitmap, m_destBitmap, pos[0], pos[1], panCurr[0], panCurr[1], m_scaleFac, m_wrapMode.getConstant());
 //		if (System.currentTimeMillis()-start < 1000) {
 //			++count;
 //		} else {
@@ -66,7 +88,7 @@ public class BitmapperView extends ImageView {
 		invalidate();
 	}
 	
-	public void setWrapMode(final int wrapMode) {
+	public void setWrapMode(final ConformLib.WrapMode wrapMode) {
 		m_wrapMode = wrapMode;
 		invalidate();
 	}
@@ -81,16 +103,26 @@ public class BitmapperView extends ImageView {
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		switch (event.getAction()) {
-		case MotionEvent.ACTION_DOWN:
-		case MotionEvent.ACTION_MOVE:
-			pos[0] = event.getX();
-			pos[1] = event.getY();
-			getScreenToUnitSquareMatrix().mapPoints(pos);
+		final Matrix toUnitSqMat = getScreenToUnitSquareMatrix();
+		m_scaleGestureDetector.onTouchEvent(event);
+		if (m_scaleGestureDetector.isInProgress()) {
+			panCurr[0] = m_scaleGestureDetector.getFocusX();
+			panCurr[1] = m_scaleGestureDetector.getFocusY();
+			toUnitSqMat.mapPoints(panCurr);
 			invalidate();
 			return true;
+		} else {
+			switch (event.getAction()) {
+			case MotionEvent.ACTION_DOWN:
+			case MotionEvent.ACTION_MOVE:
+				pos[0] = event.getX();
+				pos[1] = event.getY();
+				toUnitSqMat.mapPoints(pos);
+				invalidate();
+				return true;
+			}
+			return super.onTouchEvent(event);
 		}
-		return super.onTouchEvent(event);
 	}
 
 }

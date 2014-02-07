@@ -58,6 +58,8 @@ struct fixed_point {
 	fixed_point& operator -= (fixed_point r) { intValue -= r.intValue; return *this; }
 	fixed_point& operator *= (fixed_point r) { intValue = fixmul<p>(intValue, r.intValue); return *this; }
 	fixed_point& operator /= (fixed_point r) { intValue = fixdiv<p>(intValue, r.intValue); return *this; }
+	fixed_point& operator |= (int32_t r) { intValue |= r; return *this; }
+	fixed_point& operator &= (int32_t r) { intValue &= r; return *this; }
 
 	fixed_point& operator *= (int32_t r) { intValue *= r; return *this; }
 	fixed_point& operator /= (int32_t r) { intValue /= r; return *this; }
@@ -67,6 +69,8 @@ struct fixed_point {
 	fixed_point operator - (fixed_point r) const { fixed_point x = *this; x -= r; return x;}
 	fixed_point operator * (fixed_point r) const { fixed_point x = *this; x *= r; return x;}
 	fixed_point operator / (fixed_point r) const { fixed_point x = *this; x /= r; return x;}
+	fixed_point operator | (int32_t r) const { fixed_point x = *this; x |= r; return x;}
+	fixed_point operator & (int32_t r) const { fixed_point x = *this; x &= r; return x;}
 	
 	bool operator == (fixed_point r) const { return intValue == r.intValue; }
 	bool operator != (fixed_point r) const { return !(*this == r); }
@@ -162,10 +166,10 @@ inline fixed_point<p> mod(const fixed_point<p> a, const fixed_point<p> modulus)
 }
 
 template <int p>
-inline fixed_point<p> clamp(fixed_point<p> a)
+inline fixed_point<p> clamp(const fixed_point<p> a)
 {
 	fixed_point<p> r;
-	r.intValue = a.intValue > (1<<p)?(1<<p):(a.intValue < 0?0:a.intValue);
+	r.intValue = (a.intValue & -(a.intValue > 0) & -(a.intValue <= (1<<p))) | ((a.intValue > (1<<p) << p));
 	return r;
 }
 

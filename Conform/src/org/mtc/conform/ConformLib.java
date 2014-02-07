@@ -17,9 +17,13 @@ public class ConformLib {
 		return lib;
 	}
 	
-	//Boundary Treatments
-	public static final int TILE = 0; 
-	public static final int CLAMP = 1; 
+	public enum WrapMode {
+		TILE(0),
+		CLAMP(1);
+		private WrapMode(final int mode) {this.mode =  mode;}
+		public int getConstant() {return mode;}
+		private final int mode;
+	}
 	
-	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo, float x, float y, int wrapMode);
+	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo, float x, float y, float pivotX, float pivotY, float scaleFac, int wrapMode);
 }

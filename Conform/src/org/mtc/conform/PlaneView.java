@@ -59,7 +59,7 @@ public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
 		private void doDraw(Canvas c) {
 			Log.v(TAG,"drawing...");
 			m_drawnBitmap.eraseColor(Color.TRANSPARENT);
-			ConformLib.get().pullbackBitmaps(m_sourceBitmap, m_drawnBitmap, m_x, m_y, 0);
+			//ConformLib.get().pullbackBitmaps(m_sourceBitmap, m_drawnBitmap, m_x, m_y, 0);
 			c.drawBitmap(m_drawnBitmap, getMatrix(), null);
 		}
 		

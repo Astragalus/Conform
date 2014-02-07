@@ -24,7 +24,7 @@ Pixel::Pixel(const uint32_t &pix) :
 		a((pix & 0xFF000000) >> 24), r((pix & 0x00FF0000) >> 16), g((pix & 0x0000FF00) >> 8), b(pix & 0x000000FF) {
 }
 //Construct a Pixel by linearly interpolating between two others
-Pixel Pixel::interp(const Pixel &p0, const Pixel &p1, const fixpoint &t) {
+const Pixel Pixel::interp(const Pixel &p0, const Pixel &p1, const fixpoint &t) {
 	return Pixel((p0.a*(1-t) + p1.a*t).toUnsigned(),
 				 (p0.r*(1-t) + p1.r*t).toUnsigned(),
 				 (p0.g*(1-t) + p1.g*t).toUnsigned(),
@@ -51,7 +51,7 @@ BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth,
 	m_wrapMode(wrapMode) {
 }
 //Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
-Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
+const Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
 	const fixpoint xfix = ((m_wrapMode == TILE)?frac(w.real()*m_xMult):clamp(w.real()*m_xMult))*fixpoint(m_srcWidth-1);
 	const fixpoint yfix = ((m_wrapMode == TILE)?frac(w.imag()*m_yMult):clamp(w.imag()*m_yMult))*fixpoint(m_srcHeight-1);
 	const fixpoint tx = frac(xfix);
@@ -86,15 +86,11 @@ void MappedBitmap::pullbackSampledBitmap(const MoebiusTrans &map, const BitmapSa
 MoebiusTrans::MoebiusTrans(const complex<fixpoint> &a, const complex<fixpoint> &b, const complex<fixpoint> &c, const complex<fixpoint> &d) :
 		m_a(a), m_b(b), m_c(c), m_d(d) {
 }
-complex<fixpoint> MoebiusTrans::operator()(const complex<fixpoint> &z) const {
-	const complex<fixpoint> numer(m_a*z+m_b);
-	const complex<fixpoint> denom(m_c*z+m_d);
-	if (!isZero(denom)) {
-		return numer/denom;
-	} else {
-		return complex<fixpoint>(0,0);
-	}
+
+const complex<fixpoint> MoebiusTrans::operator()(const complex<fixpoint> &z) const {
+	return (m_a*z+m_b)/oneIfZero(m_c*z+m_d);
 }
+
 const MoebiusTrans MoebiusTrans::inv() const {
 	const complex<fixpoint> det(m_a*m_d-m_b*m_c);
 	if (!isZero(det)) {

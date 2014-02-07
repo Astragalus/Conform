@@ -30,6 +30,13 @@ public class ConformActivity extends Activity {
     	return true;
     }
     
+    private boolean setWrapMode(final ConformLib.WrapMode wrapMode) {
+    	Log.d(TAG, "Setting wrap mode to: " + wrapMode.name());
+		final View planeView = findViewById(R.id.planeView);
+		((BitmapperView)planeView).setWrapMode(wrapMode);
+		return true;
+    }
+    
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
@@ -39,18 +46,10 @@ public class ConformActivity extends Activity {
     		startActivityForResult(imagePickIntent, IMAGE_PICK);
     		return true;
     	case R.id.shouldTile:
-    		if (!item.isChecked()) {
-    			item.setChecked(true);
-				final View planeView = findViewById(R.id.planeView);
-				((BitmapperView)planeView).setWrapMode(ConformLib.TILE);
-    		}
-			return true;
+    		item.setChecked(!item.isChecked() && setWrapMode(ConformLib.WrapMode.TILE));
+    		return true;
     	case R.id.shouldClamp:
-    		if (!item.isChecked()) {
-    			item.setChecked(true);
-    			final View planeView = findViewById(R.id.planeView);
-    			((BitmapperView)planeView).setWrapMode(ConformLib.CLAMP);
-    		}
+    		item.setChecked(!item.isChecked() && setWrapMode(ConformLib.WrapMode.CLAMP));
     		return true;
     	}
     	return super.onOptionsItemSelected(item);

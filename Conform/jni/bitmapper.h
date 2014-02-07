@@ -24,6 +24,10 @@ static inline bool isZero(const complex<fixpoint> &z) {
 	return (!z.real() && !z.imag());
 }
 
+static inline const complex<fixpoint> oneIfZero(const complex<fixpoint> &a) {
+	return complex<fixpoint>(a.real()|(!a.real() && !a.imag()), a.imag());
+}
+
 class Pixel {
 public:
 	//Construct a Pixel from a, r, g, and b values
@@ -31,7 +35,7 @@ public:
 	//Construct a Pixel from an ARGB_8888 formatted pixel
 	explicit Pixel(const uint32_t &pix);
 	//Construct a Pixel by linearly interpolating between two others
-	static Pixel interp(const Pixel &p0, const Pixel &p1, const fixpoint &t);
+	static const Pixel interp(const Pixel &p0, const Pixel &p1, const fixpoint &t);
 	//Write Pixel to an ARGB_8888 formatted destination
 	void write(uint32_t &dest) const;
 	friend ostream& operator<<(ostream& os, const Pixel& p);
@@ -49,7 +53,7 @@ public:
 	//Construct an object representing a bitmap whose color can be sampled in various ways
 	BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int wrapMode);
 	//Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
-	Pixel bilinearSample(const complex<fixpoint> &w) const;
+	const Pixel bilinearSample(const complex<fixpoint> &w) const;
 private:
 	const uint32_t *m_srcPixels;
 	const uint32_t m_srcWidth;
@@ -62,7 +66,7 @@ private:
 class MoebiusTrans {
 public:
 	MoebiusTrans(const complex<fixpoint> &a, const complex<fixpoint> &b, const complex<fixpoint> &c, const complex<fixpoint> &d);
-	complex<fixpoint> operator()(const complex<fixpoint> &z) const;
+	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
 	const MoebiusTrans inv() const;
 	static MoebiusTrans identity();
 	friend const MoebiusTrans operator*(const MoebiusTrans &a, const MoebiusTrans &b);

@@ -2,23 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item
         android:id="@+id/loadImage"
+        android:icon="@android:drawable/ic_menu_gallery"
+        android:showAsAction="ifRoom"
         android:title="@string/menu_item_load_image">
     </item>
     <group
-        android:id="@+id/wrappingModes"
+        android:id="@+id/wrapModeMenuGroup"
         android:checkableBehavior="single" >
         <item
             android:id="@+id/shouldTile"
-            android:checkable="true"
+            android:icon="@android:drawable/btn_radio"
             android:checked="true"
-            android:enabled="true"
             android:title="@string/menu_item_should_tile">
         </item>
         <item
             android:id="@+id/shouldClamp"
-            android:checkable="true"
-            android:checked="false"
-            android:enabled="true"
+            android:icon="@android:drawable/btn_radio"
             android:title="@string/menu_item_should_clamp">
         </item>
     </group>

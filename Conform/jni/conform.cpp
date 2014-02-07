@@ -48,10 +48,10 @@ const char *bitmapFormatToString(const int fmt) {
 }
 
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jint wrapMode);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
 }
 
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jint wrapMode) {
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
 	int status = 0;
 
 	AndroidBitmapInfo sourceInfo;
@@ -87,10 +87,12 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 
 	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
-	const MoebiusTrans scale(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
-	const complex<fixpoint> a(scale(complex<fixpoint>(x,y)));
+	const MoebiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
+	const MoebiusTrans zoom(complex<fixpoint>(scaleFac,0), complex<fixpoint>(0,0), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
+	const MoebiusTrans translate(view*MoebiusTrans(complex<fixpoint>(1,0), complex<fixpoint>(-pivotX,-pivotY), complex<fixpoint>(0,0), complex<fixpoint>(1,0)));
+	const complex<fixpoint> a(view(complex<fixpoint>(x,y)));
 	const MoebiusTrans blaschke(complex<fixpoint>(1,0),-a,-conj(a),complex<fixpoint>(1,0));
-	const MoebiusTrans map(scale.inv()*blaschke*scale);
+	const MoebiusTrans map(view.inv()*blaschke*translate*zoom.inv()*translate.inv()*view);
 	to.pullbackSampledBitmap(map, from);
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);
