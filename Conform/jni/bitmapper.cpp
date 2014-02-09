@@ -8,7 +8,7 @@
 #include "fixed_class.h"
 #include "logstream.h"
 
-#define  LOG_TAG    "bitmapper"
+#define  LOG_TAG    "Conform"
 
 using namespace std;
 

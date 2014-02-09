@@ -1,29 +1,29 @@
 package org.mtc.conform;
 
+import org.mtc.conform.math.Complex;
+import org.mtc.conform.math.ComplexAffineTrans;
+
 import android.graphics.Bitmap;
 
 public class ConformLib {
 
-	private static ConformLib lib = null; 
+	public final static ConformLib INSTANCE = new ConformLib(); 
 
 	private ConformLib() {
-	}
-	
-	public static synchronized ConformLib get() {
-		if (lib == null) {
-			System.loadLibrary("conform");
-			lib = new ConformLib();
-		}
-		return lib;
+		System.loadLibrary("conform");
 	}
 	
 	public enum WrapMode {
 		TILE(0),
 		CLAMP(1);
 		private WrapMode(final int mode) {this.mode =  mode;}
-		public int getConstant() {return mode;}
+		public int getInt() {return mode;}
 		private final int mode;
 	}
 	
-	public native int pullbackBitmaps(Bitmap bmFrom, Bitmap bmTo, float x, float y, float pivotX, float pivotY, float scaleFac, int wrapMode);
+	public int pullback(Bitmap sourceBitmap, Bitmap viewBitmap, Complex param, ComplexAffineTrans currTrans, WrapMode wrapMode) {
+		return pullbackBitmaps(sourceBitmap, viewBitmap, param.re, param.im, currTrans.tr.re, currTrans.tr.im, currTrans.sc.re, wrapMode.getInt());
+	}
+	
+	private native int pullbackBitmaps(Bitmap sourceBitmap, Bitmap viewBitmap, float x, float y, float pivotX, float pivotY, float scaleFac, int wrapMode);
 }

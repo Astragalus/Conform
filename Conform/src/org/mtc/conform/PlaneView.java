@@ -18,7 +18,7 @@ import android.view.SurfaceView;
 /**
  */
 public class PlaneView extends SurfaceView implements SurfaceHolder.Callback{
-	public final static String TAG = "PlaneView";
+	public final static String TAG = "Conform";
 	private Bitmap m_sourceBitmap;
 	private Bitmap m_drawnBitmap;
 	private final int m_defaultBitmapId;

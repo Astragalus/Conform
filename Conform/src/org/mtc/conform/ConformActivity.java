@@ -12,7 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 public class ConformActivity extends Activity {
-	public final static String TAG = "ConformActivity";
+	public final static String TAG = "Conform";
 
 	private final static int IMAGE_PICK = 31415;
 	

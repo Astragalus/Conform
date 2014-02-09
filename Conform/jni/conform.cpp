@@ -4,7 +4,7 @@
 #include "logstream.h"
 #include "bitmapper.h"
 
-#define  LOG_TAG    "conform"
+#define  LOG_TAG    "Conform"
 
 static logstream<ANDROID_LOG_INFO> INFO(LOG_TAG);
 static logstream<ANDROID_LOG_DEBUG> DEBUG(LOG_TAG);
@@ -88,11 +88,10 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
 	const MoebiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
-	const MoebiusTrans zoom(complex<fixpoint>(scaleFac,0), complex<fixpoint>(0,0), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
-	const MoebiusTrans translate(view*MoebiusTrans(complex<fixpoint>(1,0), complex<fixpoint>(-pivotX,-pivotY), complex<fixpoint>(0,0), complex<fixpoint>(1,0)));
-	const complex<fixpoint> a(view(complex<fixpoint>(x,y)));
+	const MoebiusTrans zoom(MoebiusTrans(complex<fixpoint>(scaleFac,0), complex<fixpoint>(pivotX,pivotY), complex<fixpoint>(0,0), complex<fixpoint>(1,0)).inv());
+	const complex<fixpoint> a((view*zoom)(complex<fixpoint>(x,y)));
 	const MoebiusTrans blaschke(complex<fixpoint>(1,0),-a,-conj(a),complex<fixpoint>(1,0));
-	const MoebiusTrans map(view.inv()*blaschke*translate*zoom.inv()*translate.inv()*view);
+	const MoebiusTrans map(view.inv()*blaschke*view*zoom);
 	to.pullbackSampledBitmap(map, from);
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);
