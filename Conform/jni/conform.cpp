@@ -47,6 +47,9 @@ const char *bitmapFormatToString(const int fmt) {
 	}
 }
 
+static const complex<fixpoint> ONE(1,0);
+static const complex<fixpoint> ZERO(0,0);
+
 extern "C" {
 	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
 }
@@ -84,15 +87,16 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		ERROR << "AndroidBitmap_lockPixels failed for dest bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
-
+	//DEBUG << "Inputs: destW: " << destInfo.width << ", destH: " << destInfo.height << ", paramX: " << x << ", paramY: " << y << ", transX: " << pivotX << ", pivotY: " << pivotY << ", scale: " << scaleFac << endl;
 	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
 	const MoebiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
-	const MoebiusTrans zoom(MoebiusTrans(complex<fixpoint>(scaleFac,0), complex<fixpoint>(pivotX,pivotY), complex<fixpoint>(0,0), complex<fixpoint>(1,0)).inv());
-	const complex<fixpoint> a((view*zoom)(complex<fixpoint>(x,y)));
-	const MoebiusTrans blaschke(complex<fixpoint>(1,0),-a,-conj(a),complex<fixpoint>(1,0));
-	const MoebiusTrans map(view.inv()*blaschke*view*zoom);
+	const MoebiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
+	const complex<fixpoint> a(view(complex<fixpoint>(x,y)));
+	const MoebiusTrans blaschke(ONE,-a,-conj(a),ONE);
+	const MoebiusTrans map(view.inv()*blaschke*view*zoom.inv());
 	to.pullbackSampledBitmap(map, from);
+	//DEBUG << "PanZoom: " << zoom << ", TransformedParam: " << a << endl;
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {

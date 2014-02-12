@@ -1,5 +1,7 @@
 <resources>
 
     <color name="black">#FF000000</color>
+    <color name="greyish">#7F3F3F3F</color>
+    <color name="reddish">#7FFF3F07</color>
 
 </resources>

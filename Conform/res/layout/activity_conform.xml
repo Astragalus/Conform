@@ -6,7 +6,7 @@
     android:tag="BitmapperView"
     tools:context=".ConformActivity" >
     <org.mtc.conform.BitmapperView
-        android:id="@+id/planeView"
+        android:id="@+id/bitmapperView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:src="@drawable/celtic"

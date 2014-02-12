@@ -4,5 +4,7 @@
     <string name="menu_item_load_image">Load Image</string>
     <string name="menu_item_should_tile">Tile</string>
     <string name="menu_item_should_clamp">Clamp</string>
+    <string name="menu_item_pan_mode">Pan Mode</string>
+    <string name="menu_item_param_mode">Param Mode</string>
     <string name="default_bitmap_desc">Default bitmap image representing the complex plane</string>
 </resources>

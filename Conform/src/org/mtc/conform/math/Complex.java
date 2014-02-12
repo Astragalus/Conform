@@ -23,7 +23,11 @@ public class Complex {
 		this.re = z.re;
 		this.im = z.im;
 	}
-	
+	public Complex assignFrom(final Complex z) {
+		re = z.re;
+		im = z.im;
+		return this;
+	}
 	public Complex mult(final Complex z) {
 		final float newre = re*z.re + im*z.im;
 		final float newim = re*z.im + im*z.re;

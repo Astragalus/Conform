@@ -11,10 +11,12 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.OnScaleGestureListener;
-import android.view.View;
 import android.widget.ImageView;
 
 public class BitmapperView extends ImageView {
@@ -30,59 +32,80 @@ public class BitmapperView extends ImageView {
 		final private Rect m_drawingRect = new Rect();
 		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
 		final private Complex m_param = new Complex(0.5f, 0.5f);
+		final private Complex m_scale = new Complex(Complex.ONE);
+		final private Complex m_translate = new Complex(Complex.ZERO);
 		private float[] m_point = new float[2];
 		
 		public void updateMatrix() {
 			m_view.getDrawingRect(m_drawingRect);
 			m_view.getImageMatrix().invert(m_screenToSquareMat);
 			m_screenToSquareMat.postScale(1.0f/m_drawingRect.width(), 1.0f/m_drawingRect.height());
-			//Log.d(TAG, "Matrix updated: drawing rect w=" + m_drawingRect.width() + ", h=" + m_drawingRect.height());
 			m_view.invalidate();
 		}
 		public void scale(final float s, final float x, final float y) {
-			m_point[0] = x;
-			m_point[1] = y;
-			m_screenToSquareMat.mapPoints(m_point);
-			m_currTrans.postMult(ComplexAffineTrans.scaling(s, m_point[0], m_point[1]));
+			screenToSquareVectorComplex(-x+0.5f, -y+0.5f, m_scale);
+			//Log.d(TAG, "Scaling: s=" + s + ", at x=" + x + ",y=" + y);
+			m_currTrans.postMult(ComplexAffineTrans.scaling(s, m_scale));
+			m_view.invalidate();
+		}
+		public void translate(final float x, final float y) {
+			screenToSquareVectorComplex(-x, -y, m_translate);
+			//Log.d(TAG, "Translating: x=" + x + ",y=" + y);
+			m_currTrans.postMult(ComplexAffineTrans.translation(m_translate));
 			m_view.invalidate();
 		}
 		public void paramChamge(final float screenX, final float screenY) {
-			m_point[0] = screenX;
-			m_point[1] = screenY;
-			m_screenToSquareMat.mapPoints(m_point);
-			m_param.re = m_point[0];
-			m_param.im = m_point[1];
+			screenToSquarePointComplex(screenX, screenY, m_param);
 			m_view.invalidate();
+		}
+		private void screenToSquarePointComplex(final float x, final float y, final Complex output) {
+			m_point[0] = x;
+			m_point[1] = y;
+			m_screenToSquareMat.mapPoints(m_point);
+			output.re = m_point[0];
+			output.im = m_point[1];			
+		}
+		private void screenToSquareVectorComplex(final float x, final float y, final Complex output) {
+			m_point[0] = x;
+			m_point[1] = y;
+			m_screenToSquareMat.mapVectors(m_point);
+			output.re = m_point[0];
+			output.im = m_point[1];			
 		}
 	};
 
-	private static class BitmapperTouchHandler implements OnScaleGestureListener {
-		private final ScaleGestureDetector m_detector;
-		private final View m_view;
+	private class BitmapperTouchHandler extends SimpleOnGestureListener implements OnScaleGestureListener {
+		private final ScaleGestureDetector m_zoomDetector;
+		private final GestureDetector m_gestureDetector;
 		private final TransformationState m_state;
-		public BitmapperTouchHandler(final Context context, final View view, final TransformationState state) {
-			m_detector = new ScaleGestureDetector(context, this);
-			m_view = view;
+		public BitmapperTouchHandler(final Context context, final TransformationState state) {
+			m_zoomDetector = new ScaleGestureDetector(context, this);
+			m_gestureDetector = new GestureDetector(getContext(), this);
 			m_state = state;
+		}
+		public boolean onTouchEvent(MotionEvent event) {
+			boolean processed = false;
+			switch (m_touchMode) {
+			case PARAM:
+				processed |= onParamChgEvent(event);
+				break;
+			case PAN:
+				processed |= m_zoomDetector.onTouchEvent(event);
+				processed |= m_gestureDetector.onTouchEvent(event);
+				break;
+			}
+			//Log.d(TAG, "Processed touch event - current transformation: " + m_state.m_currTrans.toString());
+			return processed;
 		}
 		private boolean onParamChgEvent(MotionEvent event) {
 			switch (event.getAction() & MotionEvent.ACTION_MASK) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_MOVE:
 				m_state.paramChamge(event.getX(), event.getY());
-				m_view.invalidate();
+				//Log.d(TAG, "Processed param chg event - current param: " + m_state.m_param.toString());
 				return true;
 			}
 			return false;
-		}
-		public boolean onTouchEvent(MotionEvent event) {
-			//Log.d(TAG, "Processing touch event: x1=" + event.getX(0) + ", y1=" + event.getY(0) + ((event.getPointerCount()>1)?(", x2=" + event.getX(1) + ", y2=" + event.getY(1)):""));
-			boolean processed = false;
-			if (event.getPointerCount() == 1) {
-				processed |= onParamChgEvent(event);
-			}
-			processed |= m_detector.onTouchEvent(event);
-			return processed;
 		}
 		@Override
 		public boolean onScale(ScaleGestureDetector detector) {
@@ -96,7 +119,21 @@ public class BitmapperView extends ImageView {
 		@Override
 		public void onScaleEnd(ScaleGestureDetector detector) {
 		}
+		@Override
+		public boolean onScroll(MotionEvent e1, MotionEvent e2,	float distanceX, float distanceY) {
+			//Log.d(TAG, "onScroll: dx=" + distanceX + ", dy=" + distanceY);
+			m_state.translate(distanceX, distanceY);
+			return true;
+		}
 	};
+
+	public enum TouchMode {
+		PARAM(0),
+		PAN(1);
+		private TouchMode(final int mode) {this.mode =  mode;}
+		public int getInt() {return mode;}
+		private final int mode;
+	}
 
 	private Bitmap m_srcBitmap;
 	private Bitmap m_destBitmap = null;
@@ -107,10 +144,8 @@ public class BitmapperView extends ImageView {
 	private final BitmapperTouchHandler m_touchHandler;
 	private final TransformationState m_transState;
 
-	private ConformLib.WrapMode m_wrapMode = ConformLib.WrapMode.TILE;
-	
-//	long start;
-//	int count;
+	ConformLib.WrapMode m_wrapMode = ConformLib.WrapMode.TILE;
+	TouchMode m_touchMode = TouchMode.PARAM;
 	
 	public BitmapperView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -118,28 +153,19 @@ public class BitmapperView extends ImageView {
 		m_destBitmap = Bitmap.createBitmap(m_destWidth, m_destHeight, Config.ARGB_8888);
 		setImageBitmap(m_destBitmap);
 		m_transState = new TransformationState(this);
-		m_touchHandler = new BitmapperTouchHandler(context, this, m_transState);
+		m_touchHandler = new BitmapperTouchHandler(context, m_transState);
 	}
 
 	@Override
 	protected void onDraw(Canvas canvas) {
 		m_destBitmap.eraseColor(0);
-//		if (count == 0)
-//			start = System.currentTimeMillis();
 		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_transState.m_param, m_transState.m_currTrans, m_wrapMode);
-//		if (System.currentTimeMillis()-start < 1000) {
-//			++count;
-//		} else {
-//			Log.i(TAG,String.format("fps: %2d", count));
-//			count = 0;
-//		}
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
 	}
 	
 	@Override
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
-		//Log.d(TAG, "Size changed: w=" + w + ", h=" + h + ", oldw=" + oldw + ", oldh=" + oldh);
 		m_transState.updateMatrix();
 	}
 	
@@ -150,6 +176,13 @@ public class BitmapperView extends ImageView {
 	
 	public void setWrapMode(final ConformLib.WrapMode wrapMode) {
 		m_wrapMode = wrapMode;
+		Log.d(TAG, "Wrap mode set to: " + wrapMode.name());
+		invalidate();
+	}
+	
+	public void setTouchMode(final TouchMode touchMode) {
+		m_touchMode = touchMode;
+		Log.d(TAG, "Touch mode set to: " + touchMode.name());
 		invalidate();
 	}
 	
@@ -157,5 +190,4 @@ public class BitmapperView extends ImageView {
 	public boolean onTouchEvent(MotionEvent event) {
 		return m_touchHandler.onTouchEvent(event);
 	}
-
 }

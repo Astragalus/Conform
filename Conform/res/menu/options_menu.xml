@@ -6,9 +6,15 @@
         android:showAsAction="ifRoom"
         android:title="@string/menu_item_load_image">
     </item>
+    <item
+        android:id="@+id/touchMode"
+        android:icon="@drawable/ic_btn_arrows"
+        android:showAsAction="ifRoom"
+        android:title="@string/menu_item_pan_mode">
+    </item>
     <group
         android:id="@+id/wrapModeMenuGroup"
-        android:checkableBehavior="single" >
+        android:checkableBehavior="single">
         <item
             android:id="@+id/shouldTile"
             android:icon="@android:drawable/btn_radio"

@@ -31,28 +31,41 @@ public class ConformActivity extends Activity {
     }
     
     private boolean setWrapMode(final ConformLib.WrapMode wrapMode) {
-    	Log.d(TAG, "Setting wrap mode to: " + wrapMode.name());
-		final View planeView = findViewById(R.id.planeView);
+		final View planeView = findViewById(R.id.bitmapperView);
 		((BitmapperView)planeView).setWrapMode(wrapMode);
 		return true;
     }
     
+    private boolean setTouchMode(final BitmapperView.TouchMode touchMode) {
+    	final View planeView = findViewById(R.id.bitmapperView);
+    	((BitmapperView)planeView).setTouchMode(touchMode);
+    	return touchMode == BitmapperView.TouchMode.PAN;
+    }
+    
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item) {    	
+    	boolean handledEvent = false;
     	switch (item.getItemId()) {
     	case R.id.loadImage:
     		final Intent imagePickIntent = new Intent(Intent.ACTION_GET_CONTENT);
     		imagePickIntent.setType("image/*");
     		startActivityForResult(imagePickIntent, IMAGE_PICK);
-    		return true;
+    		handledEvent = true;
+    		break;
+    	case R.id.touchMode:
+    		item.setChecked((!item.isChecked() && setTouchMode(BitmapperView.TouchMode.PAN)) || setTouchMode(BitmapperView.TouchMode.PARAM));
+    		handledEvent = true;
+    		break;
     	case R.id.shouldTile:
     		item.setChecked(!item.isChecked() && setWrapMode(ConformLib.WrapMode.TILE));
-    		return true;
+    		handledEvent = true;
+    		break;
     	case R.id.shouldClamp:
     		item.setChecked(!item.isChecked() && setWrapMode(ConformLib.WrapMode.CLAMP));
-    		return true;
+    		handledEvent = true;
+    		break;
     	}
-    	return super.onOptionsItemSelected(item);
+    	return handledEvent || super.onOptionsItemSelected(item);
     }
     
     @Override
@@ -63,7 +76,7 @@ public class ConformActivity extends Activity {
     		if (resultCode == RESULT_OK) {
     			 try {
 					final Bitmap requestedBitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(data.getData()));
-					final View planeView = findViewById(R.id.planeView);
+					final View planeView = findViewById(R.id.bitmapperView);
 					((BitmapperView)planeView).setSourceBitmap(requestedBitmap);
 				} catch (Exception e) {
 					Log.e(TAG, "Error loading image",e);

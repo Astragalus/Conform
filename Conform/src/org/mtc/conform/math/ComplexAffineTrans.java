@@ -10,18 +10,24 @@ public class ComplexAffineTrans {
 	final public static ComplexAffineTrans IDENT = new ComplexAffineTrans(Complex.ONE, Complex.ZERO);
 
 	public ComplexAffineTrans(final Complex scaling, final Complex translation) {
-		sc = scaling;
-		tr = translation;
+		sc = new Complex(scaling);
+		tr = new Complex(translation);
 	}
 	public ComplexAffineTrans(final ComplexAffineTrans t) {
 		this(t.sc,t.tr);
 	}
 
+	public static ComplexAffineTrans translation(final Complex z) {
+		return new ComplexAffineTrans(Complex.ONE, z);
+	}
 	public static ComplexAffineTrans translation(final float x, final float y) {
-		return new ComplexAffineTrans(Complex.ONE, new Complex(x,y));
+		return translation(new Complex(x,y));
+	}
+	public static ComplexAffineTrans scaling(final float s, final Complex p) {
+		return new ComplexAffineTrans(new Complex(s), new Complex(p).mult(s-1.0f));
 	}
 	public static ComplexAffineTrans scaling(final float s, final float x, final float y) {
-		return new ComplexAffineTrans(new Complex(s), new Complex(x,y).mult(1.0f-s));
+		return new ComplexAffineTrans(new Complex(s), new Complex(x,y).mult(s-1.0f));
 	}
 	
 	public ComplexAffineTrans preMult(final ComplexAffineTrans t) {
