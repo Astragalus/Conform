@@ -17,6 +17,14 @@ public class ComplexAffineTrans {
 		this(t.sc,t.tr);
 	}
 
+	public Complex apply(final Complex z) {
+		return z.mult(sc).add(tr);
+	}
+	
+	public Complex applyInverse(final Complex z) {
+		return z.sub(tr).div(sc);
+	}
+	
 	public static ComplexAffineTrans translation(final Complex z) {
 		return new ComplexAffineTrans(Complex.ONE, z);
 	}
@@ -24,7 +32,7 @@ public class ComplexAffineTrans {
 		return translation(new Complex(x,y));
 	}
 	public static ComplexAffineTrans scaling(final float s, final Complex p) {
-		return new ComplexAffineTrans(new Complex(s), new Complex(p).mult(s-1.0f));
+		return new ComplexAffineTrans(new Complex(s), new Complex(p).mult(1.0f-s));
 	}
 	public static ComplexAffineTrans scaling(final float s, final float x, final float y) {
 		return new ComplexAffineTrans(new Complex(s), new Complex(x,y).mult(s-1.0f));

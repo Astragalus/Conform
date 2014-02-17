@@ -1,4 +1,7 @@
 package org.mtc.conform.math;
+
+import java.util.Locale;
+
 /**
  * A class representing a complex number with float components.  Warning: very mutable (for speed)!
  */
@@ -70,9 +73,10 @@ public class Complex {
 	}
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append('(').append(re).append("+i").append(im).append(')');
-		return sb.toString();
+		return String.format(Locale.ENGLISH, "(%3.4f+i%3.4f", re, im);
+//		final StringBuilder sb = new StringBuilder();
+//		sb.append('(').append(re).append("+i").append(im).append(')');
+//		return sb.toString();
 	}
 	@Override
 	public boolean equals(Object o) {
