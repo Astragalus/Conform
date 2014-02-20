@@ -34,8 +34,8 @@ public:
 	explicit Pixel(const uint32_t &a, const uint32_t &r, const uint32_t &g, const uint32_t &b);
 	//Construct a Pixel from an ARGB_8888 formatted pixel
 	explicit Pixel(const uint32_t &pix);
-	//Construct a Pixel by linearly interpolating between two others
-	static const Pixel interp(const Pixel &p0, const Pixel &p1, const fixpoint &t);
+	//Bilinearly interpolate between four pixels with two parameters
+	static const Pixel bilinterp(const Pixel &dl, const Pixel &dr, const Pixel &ul, const Pixel &ur, const fixpoint &h, const fixpoint &v);
 	//Write Pixel to an ARGB_8888 formatted destination
 	void write(uint32_t &dest) const;
 	friend ostream& operator<<(ostream& os, const Pixel& p);
@@ -69,7 +69,8 @@ public:
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
 	const MoebiusTrans inv() const;
 	static MoebiusTrans identity();
-	friend const MoebiusTrans operator*(const MoebiusTrans &a, const MoebiusTrans &b);
+	//MoebiusTrans& operator*=(const MoebiusTrans &g);
+	const MoebiusTrans operator*(const MoebiusTrans &g) const;
 	friend ostream &operator<<(ostream &os, const MoebiusTrans &mt);
 private:
 	const complex<fixpoint> m_a;

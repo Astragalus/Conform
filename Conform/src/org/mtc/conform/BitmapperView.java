@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -26,6 +27,7 @@ public class BitmapperView extends ImageView {
 		final private Matrix m_screenToSquareMat = new Matrix();
 		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
 		final private Complex m_param = new Complex(0.5f, 0.5f);
+		final private Complex m_paramDot = new Complex(0f,0f);
 		final private Complex m_pivot = new Complex(Complex.ONE);
 		final private Complex m_translate = new Complex(Complex.ZERO);
 		private float[] m_point = new float[2];
@@ -36,14 +38,27 @@ public class BitmapperView extends ImageView {
 		public void scale(final float s, final float x, final float y) {
 			screenToSquarePointComplex(x, y, m_pivot);
 			m_currTrans.postMult(ComplexAffineTrans.scaling(s, m_pivot));
+			updateParamDot();
 		}
 		public void translate(final float x, final float y) {
 			screenToSquareVectorComplex(-x, -y, m_translate);
 			m_currTrans.postMult(ComplexAffineTrans.translation(m_translate));
+			updateParamDot();
 		}
 		public void paramChange(final float screenX, final float screenY) {
 			screenToSquarePointComplex(screenX, screenY, m_param);
 			m_currTrans.applyInverse(m_param);
+			m_paramScreenCoordsX = screenX;
+			m_paramScreenCoordsY = screenY;
+		}
+		private void updateParamDot() {
+			m_paramDot.assignFrom(m_param);
+			m_currTrans.apply(m_paramDot);
+			m_point[0] = m_paramDot.re*m_drawWidth;
+			m_point[1] = m_paramDot.im*m_drawHeight;
+			getImageMatrix().mapPoints(m_point);
+			m_paramScreenCoordsX = m_point[0];
+			m_paramScreenCoordsY = m_point[1];			
 		}
 		private void screenToSquarePointComplex(final float x, final float y, final Complex output) {
 			m_point[0] = x;
@@ -110,7 +125,7 @@ public class BitmapperView extends ImageView {
 			return true;
 		}
 	};
-
+	
 	public enum TouchMode {
 		PARAM(0),
 		PAN(1);
@@ -122,14 +137,23 @@ public class BitmapperView extends ImageView {
 	private Bitmap m_srcBitmap;
 	private Bitmap m_destBitmap = null;
 	
-	public int m_drawWidth = 256;
-	public int m_drawHeight = 256;
+	private int m_drawWidth = 256;
+	private int m_drawHeight = 256;
 	
 	private final BitmapperTouchHandler m_touchHandler;
 	private final TransformationState m_transState;
 
 	ConformLib.WrapMode m_wrapMode = ConformLib.WrapMode.TILE;
 	TouchMode m_touchMode = TouchMode.PARAM;
+	
+	private Paint m_paramDotPaint = new Paint();
+	private float m_paramScreenCoordsX;
+	private float m_paramScreenCoordsY;	
+	
+	long start;
+	long time;
+	int count;
+	float fps;
 	
 	public BitmapperView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -138,13 +162,26 @@ public class BitmapperView extends ImageView {
 		setImageBitmap(m_destBitmap);
 		m_transState = new TransformationState();
 		m_touchHandler = new BitmapperTouchHandler(context, m_transState);
+		m_paramDotPaint.setAntiAlias(true);
+		m_paramDotPaint.setARGB(180, 255, 110, 130);
 	}
 
 	@Override
-	protected void onDraw(Canvas canvas) {
+	protected void onDraw(Canvas canvas) {	
+//		if (count == 0)
+//			start = System.currentTimeMillis();
+		
 		m_destBitmap.eraseColor(0);
 		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_transState.m_param, m_transState.m_currTrans, m_wrapMode);
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
+		canvas.drawCircle(m_paramScreenCoordsX, m_paramScreenCoordsY, 5, m_paramDotPaint);
+		
+//		++count;
+//		if ((time = System.currentTimeMillis()-start) < 3000) {
+//			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
+//		} else {
+//			count = 0;
+//		}
 	}
 	@Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -170,6 +207,10 @@ public class BitmapperView extends ImageView {
 		m_touchMode = touchMode;
 		Log.d(TAG, "Touch mode set to: " + touchMode.name());
 		invalidate();
+	}
+	
+	public void addParam() {
+		
 	}
 	
 	@Override

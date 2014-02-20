@@ -23,12 +23,18 @@ Pixel::Pixel(const uint32_t &a, const uint32_t &r, const uint32_t &g, const uint
 Pixel::Pixel(const uint32_t &pix) :
 		a((pix & 0xFF000000) >> 24), r((pix & 0x00FF0000) >> 16), g((pix & 0x0000FF00) >> 8), b(pix & 0x000000FF) {
 }
-//Construct a Pixel by linearly interpolating between two others
-const Pixel Pixel::interp(const Pixel &p0, const Pixel &p1, const fixpoint &t) {
-	return Pixel((p0.a*(1-t) + p1.a*t).toUnsigned(),
-				 (p0.r*(1-t) + p1.r*t).toUnsigned(),
-				 (p0.g*(1-t) + p1.g*t).toUnsigned(),
-				 (p0.b*(1-t) + p1.b*t).toUnsigned());
+//Biliearly interpolate between four pixels (left/right,up/down) using two parameters (horiz, vert) between 0 and 1.
+const Pixel Pixel::bilinterp(const Pixel &dl, const Pixel &dr, const Pixel &ul, const Pixel &ur, const fixpoint &h, const fixpoint &v) {
+	const fixpoint hh(1-h);
+	const fixpoint vv(1-v);
+	const fixpoint t_dl(hh*vv);
+	const fixpoint t_dr(h*vv);
+	const fixpoint t_ul(hh*v);
+	const fixpoint t_ur(h*v);
+	return Pixel((dl.a*t_dl+dr.a*t_dr+ul.a*t_ul+ur.a*t_ur).toUnsigned(),
+				 (dl.r*t_dl+dr.r*t_dr+ul.r*t_ul+ur.r*t_ur).toUnsigned(),
+				 (dl.g*t_dl+dr.g*t_dr+ul.g*t_ul+ur.g*t_ur).toUnsigned(),
+				 (dl.b*t_dl+dr.b*t_dr+ul.b*t_ul+ur.b*t_ur).toUnsigned());
 }
 //Write Pixel to an ARGB_8888 formatted destination
 void Pixel::write(uint32_t &dest) const {
@@ -58,12 +64,10 @@ const Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
 	const fixpoint ty = frac(yfix);
 	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side
 	const uint32_t y0 = (yfix-ty).toUnsigned(); //y index of bottom (top?) side
-	const Pixel pixDown(Pixel::interp(Pixel(m_srcPixels[y0*m_srcWidth+x0]),Pixel(m_srcPixels[y0*m_srcWidth+x0+1]),tx)); //bottom, interp'd in x
-	const Pixel pixUp(Pixel::interp(Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0]), Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0+1]),tx)); //top, interp'd in x
-	const Pixel pixInterped(Pixel::interp(pixDown, pixUp, ty)); //interp'd interp'ds
-	return pixInterped;
+	return Pixel::bilinterp(Pixel(m_srcPixels[y0*m_srcWidth+x0]),Pixel(m_srcPixels[y0*m_srcWidth+x0+1]),
+							Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0]),Pixel(m_srcPixels[(y0+1)*m_srcWidth+(x0+1)]),
+							tx, ty);
 }
-
 
 MappedBitmap::MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight) :
 	m_destPixels(destPixels), m_destWidth(destWidth), m_destHeight(destHeight),
@@ -103,9 +107,17 @@ const MoebiusTrans MoebiusTrans::inv() const {
 MoebiusTrans MoebiusTrans::identity() {
 	return MoebiusTrans(complex<fixpoint>(1,0),complex<fixpoint>(0,0),complex<fixpoint>(0,0),complex<fixpoint>(1,0));
 }
+//
+//MoebiusTrans& MoebiusTrans::operator*=(const MoebiusTrans &g) {
+//	m_a = m_a*g.m_a+m_b*g.m_c;
+//	m_b = m_a*g.m_b+m_b*g.m_d;
+//	m_c = m_c*g.m_a+m_d*g.m_c;
+//	m_d = m_c*g.m_b+m_d*g.m_d;
+//	return *this;
+//}
 
-const MoebiusTrans operator*(const MoebiusTrans &f, const MoebiusTrans &g) {
-	return MoebiusTrans(f.m_a*g.m_a+f.m_b*g.m_c, f.m_a*g.m_b+f.m_b*g.m_d, f.m_c*g.m_a+f.m_d*g.m_c, f.m_c*g.m_b+f.m_d*g.m_d);
+const MoebiusTrans MoebiusTrans::operator*(const MoebiusTrans &g) const {
+	return MoebiusTrans(m_a*g.m_a+m_b*g.m_c, m_a*g.m_b+m_b*g.m_d, m_c*g.m_a+m_d*g.m_c, m_c*g.m_b+m_d*g.m_d);
 }
 
 ostream &operator<<(ostream &os, const MoebiusTrans &mt) {

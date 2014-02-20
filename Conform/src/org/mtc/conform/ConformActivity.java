@@ -30,16 +30,23 @@ public class ConformActivity extends Activity {
     	return true;
     }
     
+    private BitmapperView getBitmapperView() {
+		return (BitmapperView) findViewById(R.id.bitmapperView);
+    }
+    
     private boolean setWrapMode(final ConformLib.WrapMode wrapMode) {
-		final View planeView = findViewById(R.id.bitmapperView);
-		((BitmapperView)planeView).setWrapMode(wrapMode);
+		getBitmapperView().setWrapMode(wrapMode);
 		return true;
     }
     
     private boolean setTouchMode(final BitmapperView.TouchMode touchMode) {
-    	final View planeView = findViewById(R.id.bitmapperView);
-    	((BitmapperView)planeView).setTouchMode(touchMode);
+    	getBitmapperView().setTouchMode(touchMode);
     	return touchMode == BitmapperView.TouchMode.PAN;
+    }
+    
+    private boolean addParam() {
+    	getBitmapperView().addParam();
+    	return true;
     }
     
     @Override
@@ -54,6 +61,10 @@ public class ConformActivity extends Activity {
     		break;
     	case R.id.touchMode:
     		item.setChecked((!item.isChecked() && setTouchMode(BitmapperView.TouchMode.PAN)) || setTouchMode(BitmapperView.TouchMode.PARAM));
+    		handledEvent = true;
+    		break;
+    	case R.id.addParamMenuItem:
+    		addParam();
     		handledEvent = true;
     		break;
     	case R.id.shouldTile:

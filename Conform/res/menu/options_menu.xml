@@ -10,7 +10,15 @@
         android:id="@+id/touchMode"
         android:icon="@drawable/ic_btn_arrows"
         android:showAsAction="ifRoom"
-        android:title="@string/menu_item_pan_mode">
+        android:title="@string/menu_item_pan_mode"
+        android:checkable="true"
+        android:checked="false">
+    </item>
+    <item
+        android:id="@+id/addParamMenuItem"
+        android:icon="@android:drawable/btn_plus"
+        android:title="@string/menu_item_add_param"
+        android:showAsAction="ifRoom">
     </item>
     <group
         android:id="@+id/wrapModeMenuGroup"
