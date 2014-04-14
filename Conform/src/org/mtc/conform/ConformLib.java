@@ -21,9 +21,9 @@ public class ConformLib {
 		private final int mode;
 	}
 	
-	public int pullback(Bitmap sourceBitmap, Bitmap viewBitmap, Complex param, ComplexAffineTrans currTrans, WrapMode wrapMode) {
-		return pullbackBitmaps(sourceBitmap, viewBitmap, param.re, param.im, currTrans.tr.re, currTrans.tr.im, currTrans.sc.re, wrapMode.getInt());
+	public int pullback(Bitmap sourceBitmap, Bitmap viewBitmap, Complex param, ComplexAffineTrans currTrans, WrapMode wrapMode, int degree) {
+		return pullbackBitmaps(sourceBitmap, viewBitmap, param.re, param.im, currTrans.tr.re, currTrans.tr.im, currTrans.sc.re, wrapMode.getInt(), degree);
 	}
 	
-	private native int pullbackBitmaps(Bitmap sourceBitmap, Bitmap viewBitmap, float x, float y, float pivotX, float pivotY, float scaleFac, int wrapMode);
+	private native int pullbackBitmaps(Bitmap sourceBitmap, Bitmap viewBitmap, float x, float y, float pivotX, float pivotY, float scaleFac, int wrapMode, int degree);
 }

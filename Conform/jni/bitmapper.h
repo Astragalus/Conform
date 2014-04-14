@@ -13,8 +13,8 @@
 #include "fixed_class.h"
 
 //Boundary treatment
-#define TILE 0
-#define CLAMP 1
+//#define TILE 0
+//#define CLAMP 1
 
 using namespace std;
 
@@ -27,6 +27,37 @@ static inline bool isZero(const complex<fixpoint> &z) {
 static inline const complex<fixpoint> oneIfZero(const complex<fixpoint> &a) {
 	return complex<fixpoint>(a.real()|(!a.real() && !a.imag()), a.imag());
 }
+
+struct WrapFunc {
+	virtual const fixpoint operator()(const fixpoint& x) const = 0;
+};
+
+struct Clamp : public WrapFunc {
+	virtual const fixpoint operator()(const fixpoint& x) const {
+		return clamp(x);
+	}
+};
+
+struct Tile : public WrapFunc {
+	virtual const fixpoint operator()(const fixpoint& x) const {
+		return frac(x);
+	}
+};
+
+struct WrapFac {
+	enum WrapMode {TILE, CLAMP};
+	static const WrapFunc& create(const int type) {
+		if (type == TILE) {
+			static const Clamp clamp;
+			return clamp;
+		} else {
+			static const Tile tile;
+			return tile;
+		}
+	}
+};
+
+static const WrapFac Wrap;
 
 class Pixel {
 public:
@@ -50,9 +81,7 @@ ostream &operator<<(ostream &os, const fixed_point<16> &f);
 
 class BitmapSampler {
 public:
-	//Construct an object representing a bitmap whose color can be sampled in various ways
-	BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int wrapMode);
-	//Sample color at location represented by a complex number, with the bitmap occupying [0,1]x[0,i], and wrapping values outside.
+	BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const WrapFunc& wrap);
 	const Pixel bilinearSample(const complex<fixpoint> &w) const;
 private:
 	const uint32_t *m_srcPixels;
@@ -60,29 +89,31 @@ private:
 	const uint32_t m_srcHeight;
 	const fixpoint m_xMult;
 	const fixpoint m_yMult;
-	const int m_wrapMode;
+	const WrapFunc& m_wrap;
 };
 
-class MoebiusTrans {
+class BlaschkeMap {
 public:
-	MoebiusTrans(const complex<fixpoint> &a, const complex<fixpoint> &b, const complex<fixpoint> &c, const complex<fixpoint> &d);
+	BlaschkeMap(const complex<fixpoint>& a, const complex<fixpoint>& b, const complex<fixpoint>& c, const complex<fixpoint>& d);
+	BlaschkeMap(const BlaschkeMap& g);
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
-	const MoebiusTrans inv() const;
-	static MoebiusTrans identity();
-	//MoebiusTrans& operator*=(const MoebiusTrans &g);
-	const MoebiusTrans operator*(const MoebiusTrans &g) const;
-	friend ostream &operator<<(ostream &os, const MoebiusTrans &mt);
+	const BlaschkeMap operator-() const;
+	const BlaschkeMap operator|(const BlaschkeMap& f) const;
+	const BlaschkeMap operator*(const BlaschkeMap& f) const;
+	friend ostream &operator<<(ostream &os, const BlaschkeMap &mt);
+	static const BlaschkeMap identity;
 private:
-	const complex<fixpoint> m_a;
-	const complex<fixpoint> m_b;
-	const complex<fixpoint> m_c;
-	const complex<fixpoint> m_d;
+	complex<fixpoint> m_a;
+	complex<fixpoint> m_b;
+	complex<fixpoint> m_c;
+	complex<fixpoint> m_d;
 };
+
 
 class MappedBitmap {
 public:
 	MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight);
-	void pullbackSampledBitmap(const MoebiusTrans &map, const BitmapSampler &src);
+	void pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSampler& src);
 private:
 	uint32_t *m_destPixels;
 	const int m_destWidth;

@@ -44,8 +44,13 @@ public class ConformActivity extends Activity {
     	return touchMode == BitmapperView.TouchMode.PAN;
     }
     
-    private boolean addParam() {
-    	getBitmapperView().addParam();
+    private boolean incDegree() {
+    	getBitmapperView().incDegree();
+    	return true;
+    }
+
+    private boolean decDegree() {
+    	getBitmapperView().decDegree();
     	return true;
     }
     
@@ -63,8 +68,12 @@ public class ConformActivity extends Activity {
     		item.setChecked((!item.isChecked() && setTouchMode(BitmapperView.TouchMode.PAN)) || setTouchMode(BitmapperView.TouchMode.PARAM));
     		handledEvent = true;
     		break;
-    	case R.id.addParamMenuItem:
-    		addParam();
+    	case R.id.incDegreeMenuItem:
+    		incDegree();
+    		handledEvent = true;
+    		break;
+    	case R.id.decDegreeMenuItem:
+    		decDegree();
     		handledEvent = true;
     		break;
     	case R.id.shouldTile:

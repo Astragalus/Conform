@@ -51,10 +51,10 @@ static const complex<fixpoint> ONE(1,0);
 static const complex<fixpoint> ZERO(0,0);
 
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode, jint degree);
 }
 
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode, jint degree) {
 	int status = 0;
 
 	AndroidBitmapInfo sourceInfo;
@@ -87,13 +87,15 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		ERROR << "AndroidBitmap_lockPixels failed for dest bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
-	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
+
+	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, WrapFac::create(wrapMode) );
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
-	const MoebiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
-	const MoebiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
+	const BlaschkeMap view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
+	const BlaschkeMap zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
 	const complex<fixpoint> param(view(complex<fixpoint>(x,y)));
-	const MoebiusTrans blaschke(ONE,-param,-conj(param),ONE);
-	const MoebiusTrans map(view.inv()*blaschke*view*zoom.inv());
+	const BlaschkeMap blaschke(ONE,-param,-conj(param),ONE);
+	const BlaschkeMap map(-view|blaschke|view|-zoom);
+
 	to.pullbackSampledBitmap(map, from);
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);

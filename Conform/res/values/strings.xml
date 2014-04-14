@@ -5,6 +5,7 @@
     <string name="menu_item_should_tile">Tile</string>
     <string name="menu_item_should_clamp">Clamp</string>
     <string name="menu_item_pan_mode">Pan Mode</string>
-    <string name="menu_item_add_param">Add Parameter</string>
+    <string name="menu_item_inc_degree">Incrememnt Degree</string>
+    <string name="menu_item_dec_degree">Decrememnt Degree</string>
     <string name="default_bitmap_desc">Default Bitmap Image Representing The Complex Plane</string>
 </resources>

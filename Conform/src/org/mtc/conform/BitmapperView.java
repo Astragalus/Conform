@@ -28,9 +28,10 @@ public class BitmapperView extends ImageView {
 		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
 		final private Complex m_param = new Complex(0.5f, 0.5f);
 		final private Complex m_paramDot = new Complex(0f,0f);
+		final private Complex m_paramInvDot = new Complex(0f,0f);		
 		final private Complex m_pivot = new Complex(Complex.ONE);
 		final private Complex m_translate = new Complex(Complex.ZERO);
-		private float[] m_point = new float[2];
+		private float[] m_point = new float[4];
 		public void updateViewTransformation() {
 			getImageMatrix().invert(m_screenToSquareMat);
 			m_screenToSquareMat.postScale(1.0f/m_drawWidth, 1.0f/m_drawHeight);
@@ -48,17 +49,22 @@ public class BitmapperView extends ImageView {
 		public void paramChange(final float screenX, final float screenY) {
 			screenToSquarePointComplex(screenX, screenY, m_param);
 			m_currTrans.applyInverse(m_param);
-			m_paramScreenCoordsX = screenX;
-			m_paramScreenCoordsY = screenY;
+			updateParamDot();
 		}
 		private void updateParamDot() {
 			m_paramDot.assignFrom(m_param);
+			m_paramInvDot.assignFrom(m_param).inv().conj();
 			m_currTrans.apply(m_paramDot);
+			m_currTrans.apply(m_paramInvDot);
 			m_point[0] = m_paramDot.re*m_drawWidth;
 			m_point[1] = m_paramDot.im*m_drawHeight;
+			m_point[2] = m_paramInvDot.re*m_drawWidth;
+			m_point[3] = m_paramInvDot.im*m_drawHeight;
 			getImageMatrix().mapPoints(m_point);
 			m_paramScreenCoordsX = m_point[0];
 			m_paramScreenCoordsY = m_point[1];			
+			m_paramInvScreenCoordsX = m_point[2];
+			m_paramInvScreenCoordsY = m_point[3];			
 		}
 		private void screenToSquarePointComplex(final float x, final float y, final Complex output) {
 			m_point[0] = x;
@@ -137,8 +143,8 @@ public class BitmapperView extends ImageView {
 	private Bitmap m_srcBitmap;
 	private Bitmap m_destBitmap = null;
 	
-	private int m_drawWidth = 256;
-	private int m_drawHeight = 256;
+	private int m_drawWidth = 320;
+	private int m_drawHeight = 320;
 	
 	private final BitmapperTouchHandler m_touchHandler;
 	private final TransformationState m_transState;
@@ -147,8 +153,13 @@ public class BitmapperView extends ImageView {
 	TouchMode m_touchMode = TouchMode.PARAM;
 	
 	private Paint m_paramDotPaint = new Paint();
+	private Paint m_paramInvDotPaint = new Paint();
 	private float m_paramScreenCoordsX;
 	private float m_paramScreenCoordsY;	
+	private float m_paramInvScreenCoordsX;
+	private float m_paramInvScreenCoordsY;
+	
+	private int m_degree = 1;
 	
 	long start;
 	long time;
@@ -162,8 +173,10 @@ public class BitmapperView extends ImageView {
 		setImageBitmap(m_destBitmap);
 		m_transState = new TransformationState();
 		m_touchHandler = new BitmapperTouchHandler(context, m_transState);
-		m_paramDotPaint.setAntiAlias(true);
+		m_paramDotPaint.setAntiAlias(false);
 		m_paramDotPaint.setARGB(180, 255, 110, 130);
+		m_paramInvDotPaint.setAntiAlias(false);
+		m_paramInvDotPaint.setARGB(180, 130, 110, 255);
 	}
 
 	@Override
@@ -172,9 +185,10 @@ public class BitmapperView extends ImageView {
 //			start = System.currentTimeMillis();
 		
 		m_destBitmap.eraseColor(0);
-		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_transState.m_param, m_transState.m_currTrans, m_wrapMode);
+		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_transState.m_param, m_transState.m_currTrans, m_wrapMode, m_degree);
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
 		canvas.drawCircle(m_paramScreenCoordsX, m_paramScreenCoordsY, 5, m_paramDotPaint);
+		canvas.drawCircle(m_paramInvScreenCoordsX, m_paramInvScreenCoordsY, 5, m_paramInvDotPaint);
 		
 //		++count;
 //		if ((time = System.currentTimeMillis()-start) < 3000) {
@@ -209,8 +223,14 @@ public class BitmapperView extends ImageView {
 		invalidate();
 	}
 	
-	public void addParam() {
-		
+	public void incDegree() {
+		++m_degree;
+		invalidate();
+	}
+	
+	public void decDegree() {
+		--m_degree;
+		invalidate();
 	}
 	
 	@Override
