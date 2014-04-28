@@ -92,21 +92,45 @@ private:
 	const WrapFunc& m_wrap;
 };
 
-class BlaschkeMap {
+class ComplexMap {
+	virtual const complex<fixpoint> operator()(const complex<fixpoint> &z) const = 0;
+};
+
+class MobiusTrans {
 public:
-	BlaschkeMap(const complex<fixpoint>& a, const complex<fixpoint>& b, const complex<fixpoint>& c, const complex<fixpoint>& d);
-	BlaschkeMap(const BlaschkeMap& g);
+	explicit MobiusTrans(const complex<fixpoint>& a, const complex<fixpoint>& b, const complex<fixpoint>& c, const complex<fixpoint>& d);
+	explicit MobiusTrans();
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
-	const BlaschkeMap operator-() const;
-	const BlaschkeMap operator|(const BlaschkeMap& f) const;
-	const BlaschkeMap operator*(const BlaschkeMap& f) const;
-	friend ostream &operator<<(ostream &os, const BlaschkeMap &mt);
-	static const BlaschkeMap identity;
+	const MobiusTrans operator|(const MobiusTrans& f) const;
+	const MobiusTrans operator-() const;
+	ostream& operator<<(ostream &os) const;
+	static const MobiusTrans identity;
+	const bool isIdentity() const;
 private:
 	complex<fixpoint> m_a;
 	complex<fixpoint> m_b;
 	complex<fixpoint> m_c;
 	complex<fixpoint> m_d;
+	bool m_isIdentity;
+};
+
+class BlaschkeMap : public ComplexMap {
+public:
+	BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b, const MobiusTrans& c, const MobiusTrans& d);
+	BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b, const MobiusTrans& c);
+	BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b);
+	BlaschkeMap(const MobiusTrans& a);
+	BlaschkeMap(const BlaschkeMap& g);
+	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
+	friend BlaschkeMap& operator|(const MobiusTrans& a, BlaschkeMap& b);
+	friend BlaschkeMap& operator|(BlaschkeMap& b, const MobiusTrans& a);
+	BlaschkeMap& operator*=(const BlaschkeMap& f);
+	BlaschkeMap& operator*=(const MobiusTrans& a);
+	friend ostream& operator<<(ostream &os, const BlaschkeMap& blasch);
+	static const int max_factors = 6;
+private:
+	int m_numFactors;
+	MobiusTrans m_factors[max_factors];
 };
 
 

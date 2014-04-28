@@ -4,6 +4,7 @@
 #include <android/log.h>
 #include <sstream>
 #include <complex>
+#include <algorithm>
 
 #include "fixed_class.h"
 #include "logstream.h"
@@ -91,36 +92,85 @@ void MappedBitmap::pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSam
 }
 
 //MoebiusTrans----------------------------------------
-
-BlaschkeMap::BlaschkeMap(const complex<fixpoint>& a, const complex<fixpoint>& b, const complex<fixpoint>& c, const complex<fixpoint>& d) : m_a(a), m_b(b), m_c(c), m_d(d) {
+MobiusTrans::MobiusTrans(const complex<fixpoint>& a, const complex<fixpoint>& b, const complex<fixpoint>& c, const complex<fixpoint>& d) : m_a(a), m_b(b), m_c(c), m_d(d), m_isIdentity(false) {
 }
-
-BlaschkeMap::BlaschkeMap(const BlaschkeMap& g) : m_a(g.m_a), m_b(g.m_b), m_c(g.m_c), m_d(g.m_d) {
+MobiusTrans::MobiusTrans() : m_a(complex<fixpoint>(1,0)), m_b(complex<fixpoint>(0,0)), m_c(complex<fixpoint>(0,0)), m_d(complex<fixpoint>(1,0)), m_isIdentity(true) {
 }
-
-const complex<fixpoint> BlaschkeMap::operator()(const complex<fixpoint> &z) const {
+const complex<fixpoint> MobiusTrans::operator()(const complex<fixpoint> &z) const {
 	return (m_a*z+m_b)/oneIfZero(m_c*z+m_d);
 }
-
-const BlaschkeMap BlaschkeMap::operator-() const {
+const MobiusTrans MobiusTrans::operator|(const MobiusTrans& f) const {
+	return MobiusTrans(m_a*f.m_a + m_b*f.m_c, m_a*f.m_b + m_b*f.m_d, m_c*f.m_a + m_d*f.m_c, m_c*f.m_b + m_d*f.m_d);
+}
+const MobiusTrans MobiusTrans::operator-() const {
 	const complex<fixpoint> det(m_a*m_d-m_b*m_c);
 	if (!isZero(det)) {
-		return BlaschkeMap(m_d/det, -m_b/det, -m_c/det, m_a/det);
+		return MobiusTrans(m_d/det, -m_b/det, -m_c/det, m_a/det);
 	} else {
 		return identity;
 	}
 }
 
-const BlaschkeMap BlaschkeMap::operator|(const BlaschkeMap& g) const {
-	return BlaschkeMap(m_a*g.m_a+m_b*g.m_c, m_a*g.m_b+m_b*g.m_d, m_c*g.m_a+m_d*g.m_c, m_c*g.m_b+m_d*g.m_d);
+ostream& MobiusTrans::operator<<(ostream &os) const {
+	return os << "(" << m_a << "z+" << m_b << ")/(" << m_c << "z+" << m_d << ")";
 }
 
-const BlaschkeMap BlaschkeMap::operator*(const BlaschkeMap& f) const{
-	return f;
+const MobiusTrans MobiusTrans::identity = MobiusTrans();
+
+const bool MobiusTrans::isIdentity() const {
+	return m_isIdentity;
 }
 
-ostream &operator<<(ostream &os, const BlaschkeMap &mt) {
-	return os << "(" << mt.m_a << "z+" << mt.m_b << ")/(" << mt.m_c << "z+" << mt.m_d << ")";
+BlaschkeMap::BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b) : m_factors({a,b}), m_numFactors(2) {
+}
+BlaschkeMap::BlaschkeMap(const MobiusTrans& a) : m_factors({a}), m_numFactors(1) {
 }
 
-const BlaschkeMap BlaschkeMap::identity(complex<fixpoint>(1,0),complex<fixpoint>(0,0),complex<fixpoint>(0,0),complex<fixpoint>(1,0));
+BlaschkeMap::BlaschkeMap(const BlaschkeMap& g) : m_numFactors(g.m_numFactors) {
+	copy(&g.m_factors[0], &g.m_factors[0] + g.m_numFactors, &m_factors[0]);
+}
+
+const complex<fixpoint> BlaschkeMap::operator()(const complex<fixpoint> &z) const {
+	complex<fixpoint> w = m_factors[0](z);
+	for (int i = 1; i < m_numFactors; ++i) {
+		w *= m_factors[i](z);
+	}
+	return w;
+}
+BlaschkeMap& operator|(const MobiusTrans& a, BlaschkeMap& b) {
+	for (int i = 0; i < b.m_numFactors; ++i) {
+		b.m_factors[i] = (a|b.m_factors[i]);
+	}
+	return b;
+}
+BlaschkeMap& operator|(BlaschkeMap& b, const MobiusTrans& a) {
+	for (int i = 0; i < b.m_numFactors; ++i) {
+		b.m_factors[i] = (b.m_factors[i]|a);
+	}
+	return b;
+}
+
+BlaschkeMap& BlaschkeMap::operator*=(const BlaschkeMap& f) {
+	if (m_numFactors + f.m_numFactors < BlaschkeMap::max_factors) {
+		for (int i = 0; i < f.m_numFactors; ++i) {
+			(*this) *= f.m_factors[i];
+		}
+	}
+	return *this;
+}
+BlaschkeMap& BlaschkeMap::operator*=(const MobiusTrans& a) {
+	if (m_numFactors < BlaschkeMap::max_factors) {
+		m_factors[m_numFactors++] = a;
+	}
+	return *this;
+}
+
+ostream& operator<<(ostream &os, const BlaschkeMap& blasch) {
+	os << blasch.m_factors[0];
+	for (int i = 1; i < BlaschkeMap::max_factors; ++i) {
+		if (!blasch.m_factors[i].isIdentity()) {
+			os << '*' << blasch.m_factors[i];
+		}
+	}
+	return os;
+}

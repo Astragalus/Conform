@@ -90,11 +90,11 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 
 	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, WrapFac::create(wrapMode) );
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
-	const BlaschkeMap view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
-	const BlaschkeMap zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
+	const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
+	const MobiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
 	const complex<fixpoint> param(view(complex<fixpoint>(x,y)));
-	const BlaschkeMap blaschke(ONE,-param,-conj(param),ONE);
-	const BlaschkeMap map(-view|blaschke|view|-zoom);
+	const MobiusTrans factor(ONE,-param,-conj(param),ONE);
+	const BlaschkeMap map(-view|factor|view|-zoom);
 
 	to.pullbackSampledBitmap(map, from);
 
