@@ -36,6 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef FIXEDP_FUNC_H_INCLUDED
 #define FIXEDP_FUNC_H_INCLUDED
 
+#include <iostream>
+
 // The template argument p in all of the following functions refers to the 
 // fixed point precision (e.g. p = 8 gives 24.8 fixed point functions).
 
@@ -59,23 +61,7 @@ inline int32_t fixmul(int32_t a, int32_t b)
 template <int p>
 inline int fixdiv(int32_t a, int32_t b)
 {
-#if 1
 	return (int32_t)((((int64_t)a) << p) / b);
-#else	
-	// The following produces the same results as the above but gcc 4.0.3 
-	// generates fewer instructions (at least on the ARM processor).
-	union {
-		int64_t a;
-		struct {
-			int32_t l;
-			int32_t h;
-		};
-	} x;
-
-	x.l = a << p;
-	x.h = a >> (sizeof(int32_t) * 8 - p);
-	return (int32_t)(x.a / b);
-#endif
 }
 
 namespace detail {
@@ -162,9 +148,12 @@ int32_t float2fix(float f)
 	return (int32_t)(f * (1 << p));
 }
 
-//int32_t fixcos16(int32_t a);
-//int32_t fixsin16(int32_t a);
-//int32_t fixrsqrt16(int32_t a);
-//int32_t fixsqrt16(int32_t a);
+int32_t fixcos16(int32_t a);
+int32_t fixsin16(int32_t a);
+int32_t fixrsqrt16(int32_t a);
+int32_t fixsqrt16(int32_t a);
+
+static const int32_t FIX16_2PI	= float2fix<16>(6.28318530717958647692f);
+static const int32_t FIX16_R2PI = float2fix<16>(1.0f/6.28318530717958647692f);
 
 #endif

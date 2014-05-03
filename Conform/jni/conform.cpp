@@ -47,9 +47,6 @@ const char *bitmapFormatToString(const int fmt) {
 	}
 }
 
-static const complex<fixpoint> ONE(1,0);
-static const complex<fixpoint> ZERO(0,0);
-
 extern "C" {
 	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode, jint degree);
 }
@@ -92,9 +89,19 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
 	const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
 	const MobiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
-	const complex<fixpoint> param(view(complex<fixpoint>(x,y)));
+
+	const fixpoint angle = degree == 0 ? 0 : FIX16_2PI/degree;
+	const int n = (degree < 0 ? -degree : degree);
+	const complex<fixpoint> zeta(cos(angle), sin(angle));
+	complex<fixpoint> param(view(complex<fixpoint>(x,y)));
 	const MobiusTrans factor(ONE,-param,-conj(param),ONE);
-	const BlaschkeMap map(-view|factor|view|-zoom);
+	BlaschkeMap blas;
+	for (int i = 1; i < n; ++i) {
+		blas *= MobiusTrans::hyperbolicIsometry(param);
+		param *= zeta;
+	}
+
+	const BlaschkeMap map(-view|blas|view|-zoom);
 
 	to.pullbackSampledBitmap(map, from);
 

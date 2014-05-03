@@ -96,6 +96,11 @@ MobiusTrans::MobiusTrans(const complex<fixpoint>& a, const complex<fixpoint>& b,
 }
 MobiusTrans::MobiusTrans() : m_a(complex<fixpoint>(1,0)), m_b(complex<fixpoint>(0,0)), m_c(complex<fixpoint>(0,0)), m_d(complex<fixpoint>(1,0)), m_isIdentity(true) {
 }
+
+const MobiusTrans MobiusTrans::hyperbolicIsometry(const complex<fixpoint>& zero) {
+	return MobiusTrans(ONE,-zero,-conj(zero),ONE);
+}
+
 const complex<fixpoint> MobiusTrans::operator()(const complex<fixpoint> &z) const {
 	return (m_a*z+m_b)/oneIfZero(m_c*z+m_d);
 }
@@ -111,8 +116,8 @@ const MobiusTrans MobiusTrans::operator-() const {
 	}
 }
 
-ostream& MobiusTrans::operator<<(ostream &os) const {
-	return os << "(" << m_a << "z+" << m_b << ")/(" << m_c << "z+" << m_d << ")";
+ostream& operator<<(ostream &os, const MobiusTrans& mobius) {
+	return os << "(" << mobius.m_a << "z+" << mobius.m_b << ")/(" << mobius.m_c << "z+" << mobius.m_d << ")";
 }
 
 const MobiusTrans MobiusTrans::identity = MobiusTrans();
@@ -121,9 +126,11 @@ const bool MobiusTrans::isIdentity() const {
 	return m_isIdentity;
 }
 
-BlaschkeMap::BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b) : m_factors({a,b}), m_numFactors(2) {
+BlaschkeMap::BlaschkeMap() : m_factors({MobiusTrans::identity}), m_numFactors(0) {
 }
 BlaschkeMap::BlaschkeMap(const MobiusTrans& a) : m_factors({a}), m_numFactors(1) {
+}
+BlaschkeMap::BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b) : m_factors({a,b}), m_numFactors(2) {
 }
 
 BlaschkeMap::BlaschkeMap(const BlaschkeMap& g) : m_numFactors(g.m_numFactors) {

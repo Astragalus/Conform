@@ -12,13 +12,12 @@
 #include <complex>
 #include "fixed_class.h"
 
-//Boundary treatment
-//#define TILE 0
-//#define CLAMP 1
-
 using namespace std;
 
 typedef fixed_point<16> fixpoint;
+
+static const complex<fixpoint> ONE(1,0);
+static const complex<fixpoint> ZERO(0,0);
 
 static inline bool isZero(const complex<fixpoint> &z) {
 	return (!z.real() && !z.imag());
@@ -100,10 +99,11 @@ class MobiusTrans {
 public:
 	explicit MobiusTrans(const complex<fixpoint>& a, const complex<fixpoint>& b, const complex<fixpoint>& c, const complex<fixpoint>& d);
 	explicit MobiusTrans();
+	static const MobiusTrans hyperbolicIsometry(const complex<fixpoint>& zero);
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
 	const MobiusTrans operator|(const MobiusTrans& f) const;
 	const MobiusTrans operator-() const;
-	ostream& operator<<(ostream &os) const;
+	friend ostream& operator<<(ostream &os, const MobiusTrans& mobius);
 	static const MobiusTrans identity;
 	const bool isIdentity() const;
 private:
@@ -116,11 +116,10 @@ private:
 
 class BlaschkeMap : public ComplexMap {
 public:
-	BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b, const MobiusTrans& c, const MobiusTrans& d);
-	BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b, const MobiusTrans& c);
-	BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b);
-	BlaschkeMap(const MobiusTrans& a);
-	BlaschkeMap(const BlaschkeMap& g);
+	explicit BlaschkeMap();
+	explicit BlaschkeMap(const MobiusTrans& a);
+	explicit BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b);
+	explicit BlaschkeMap(const BlaschkeMap& g);
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
 	friend BlaschkeMap& operator|(const MobiusTrans& a, BlaschkeMap& b);
 	friend BlaschkeMap& operator|(BlaschkeMap& b, const MobiusTrans& a);

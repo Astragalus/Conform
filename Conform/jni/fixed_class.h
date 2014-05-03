@@ -181,38 +181,38 @@ inline fixed_point<p> fixinterp(fixed_point<p> a, fixed_point<p> b, fixed_point<
 }
 // specializations for 16.16 format
 
-//template <>
-//inline fixed_point<16> sin(fixed_point<16> a)
-//{
-//	fixed_point<16> r;
-//	r.intValue = fixsin16(a.intValue);
-//	return r;
-//}
-//
-//template <>
-//inline fixed_point<16> cos(fixed_point<16> a)
-//{
-//	fixed_point<16> r;
-//	r.intValue = fixcos16(a.intValue);
-//	return r;
-//}
-//
-//
-//template <>
-//inline fixed_point<16> sqrt(fixed_point<16> a)
-//{
-//	fixed_point<16> r;
-//	r.intValue = fixsqrt16(a.intValue);
-//	return r;
-//}
-//
-//template <>
-//inline fixed_point<16> rsqrt(fixed_point<16> a)
-//{
-//	fixed_point<16> r;
-//	r.intValue = fixrsqrt16(a.intValue);
-//	return r;
-//}
+template <>
+inline fixed_point<16> sin(fixed_point<16> a)
+{
+	fixed_point<16> r;
+	r.intValue = fixsin16(a.intValue);
+	return r;
+}
+
+template <>
+inline fixed_point<16> cos(fixed_point<16> a)
+{
+	fixed_point<16> r;
+	r.intValue = fixcos16(a.intValue);
+	return r;
+}
+
+
+template <>
+inline fixed_point<16> sqrt(fixed_point<16> a)
+{
+	fixed_point<16> r;
+	r.intValue = fixsqrt16(a.intValue);
+	return r;
+}
+
+template <>
+inline fixed_point<16> rsqrt(fixed_point<16> a)
+{
+	fixed_point<16> r;
+	r.intValue = fixrsqrt16(a.intValue);
+	return r;
+}
 
 template <>
 inline fixed_point<16> inv(fixed_point<16> a)
