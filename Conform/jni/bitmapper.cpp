@@ -51,24 +51,25 @@ ostream &operator<<(ostream &os, const fixed_point<16> &f) {
 }
 
 //BitmapSampler---------------------------------------
-BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const WrapFunc& wrap) :
-	m_srcPixels(srcPixels), m_srcWidth(srcWidth), m_srcHeight(srcHeight),
-	m_xMult(srcWidth<srcHeight?fixpoint(srcHeight)/fixpoint(srcWidth):fixpoint(1)),
-	m_yMult(srcWidth>srcHeight?fixpoint(srcWidth)/fixpoint(srcHeight):fixpoint(1)),
-	m_wrap(wrap){
-}
-
-const Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
-	const fixpoint xfix = m_wrap(w.real()*m_xMult)*fixpoint(m_srcWidth-1);
-	const fixpoint yfix = m_wrap(w.imag()*m_yMult)*fixpoint(m_srcHeight-1);
-	const fixpoint tx = frac(xfix);
-	const fixpoint ty = frac(yfix);
-	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side
-	const uint32_t y0 = (yfix-ty).toUnsigned(); //y index of bottom (top?) side
-	return Pixel::bilinterp(Pixel(m_srcPixels[y0*m_srcWidth+x0]),Pixel(m_srcPixels[y0*m_srcWidth+x0+1]),
-							Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0]),Pixel(m_srcPixels[(y0+1)*m_srcWidth+(x0+1)]),
-							tx, ty);
-}
+//template <typename W>
+//BitmapSampler<W>::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const W& wrap) :
+//	m_srcPixels(srcPixels), m_srcWidth(srcWidth), m_srcHeight(srcHeight),
+//	m_xMult(srcWidth<srcHeight?fixpoint(srcHeight)/fixpoint(srcWidth):fixpoint(1)),
+//	m_yMult(srcWidth>srcHeight?fixpoint(srcWidth)/fixpoint(srcHeight):fixpoint(1)),
+//	m_wrap(wrap){
+//}
+//template <typename W>
+//const Pixel BitmapSampler<W>::bilinearSample(const complex<fixpoint> &w) const {
+//	const fixpoint xfix = m_wrap(w.real()*m_xMult)*fixpoint(m_srcWidth-1);
+//	const fixpoint yfix = m_wrap(w.imag()*m_yMult)*fixpoint(m_srcHeight-1);
+//	const fixpoint tx = frac(xfix);
+//	const fixpoint ty = frac(yfix);
+//	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side
+//	const uint32_t y0 = (yfix-ty).toUnsigned(); //y index of bottom (top?) side
+//	return Pixel::bilinterp(Pixel(m_srcPixels[y0*m_srcWidth+x0]),Pixel(m_srcPixels[y0*m_srcWidth+x0+1]),
+//							Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0]),Pixel(m_srcPixels[(y0+1)*m_srcWidth+(x0+1)]),
+//							tx, ty);
+//}
 
 //MappedBitmap----------------------------------------
 
@@ -77,19 +78,19 @@ MappedBitmap::MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const
 	m_reInc(fixpoint(1)/fixpoint(m_destWidth-1)), m_imInc(fixpoint(1)/fixpoint(m_destHeight-1)) {
 }
 
-
-void MappedBitmap::pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSampler& src) {
-	fixpoint zim(0);
-	for (int v = 0; v < m_destHeight; ++v) {
-		fixpoint zre(0);
-		for (int u = 0; u < m_destWidth; ++u) {
-			const complex<fixpoint> z(zre,zim);
-			src.bilinearSample(map(z)).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
-			zre += m_reInc;
-		}
-		zim += m_imInc;
-	}
-}
+//template <typename W>
+//void MappedBitmap::pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSampler<W>& src) {
+//	fixpoint zim(0);
+//	for (int v = 0; v < m_destHeight; ++v) {
+//		fixpoint zre(0);
+//		for (int u = 0; u < m_destWidth; ++u) {
+//			const complex<fixpoint> z(zre,zim);
+//			src.bilinearSample(map(z)).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
+//			zre += m_reInc;
+//		}
+//		zim += m_imInc;
+//	}
+//}
 
 //MoebiusTrans----------------------------------------
 MobiusTrans::MobiusTrans(const complex<fixpoint>& a, const complex<fixpoint>& b, const complex<fixpoint>& c, const complex<fixpoint>& d) : m_a(a), m_b(b), m_c(c), m_d(d), m_isIdentity(false) {

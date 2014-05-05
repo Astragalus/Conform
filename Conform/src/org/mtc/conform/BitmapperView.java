@@ -181,8 +181,8 @@ public class BitmapperView extends ImageView {
 
 	@Override
 	protected void onDraw(Canvas canvas) {	
-//		if (count == 0)
-//			start = System.currentTimeMillis();
+		if (count == 0)
+			start = System.currentTimeMillis();
 		
 		m_destBitmap.eraseColor(0);
 		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_transState.m_param, m_transState.m_currTrans, m_wrapMode, m_degree);
@@ -190,12 +190,12 @@ public class BitmapperView extends ImageView {
 		canvas.drawCircle(m_paramScreenCoordsX, m_paramScreenCoordsY, 5, m_paramDotPaint);
 		canvas.drawCircle(m_paramInvScreenCoordsX, m_paramInvScreenCoordsY, 5, m_paramInvDotPaint);
 		
-//		++count;
-//		if ((time = System.currentTimeMillis()-start) < 3000) {
-//			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
-//		} else {
-//			count = 0;
-//		}
+		++count;
+		if ((time = System.currentTimeMillis()-start) < 3000) {
+			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
+		} else {
+			count = 0;
+		}
 	}
 	@Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {

@@ -85,8 +85,6 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		return status;
 	}
 
-	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, WrapFac::create(wrapMode) );
-	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
 	const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
 	const MobiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
 
@@ -103,7 +101,12 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 
 	const BlaschkeMap map(-view|blas|view|-zoom);
 
-	to.pullbackSampledBitmap(map, from);
+	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
+	if (wrapMode == 0) {
+		to.pullbackSampledBitmap(map, createSampler(sourcePtr, sourceInfo.width, sourceInfo.height, Tile()));
+	} else {
+		to.pullbackSampledBitmap(map, createSampler(sourcePtr, sourceInfo.width, sourceInfo.height, Clamp()));
+	}
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
