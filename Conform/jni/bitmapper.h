@@ -27,10 +27,6 @@ static inline const complex<fixpoint> oneIfZero(const complex<fixpoint> &a) {
 	return complex<fixpoint>(a.real()|(!a.real() && !a.imag()), a.imag());
 }
 
-//struct WrapFunc {
-//	virtual const fixpoint operator()(const fixpoint& x) const = 0;
-//};
-
 struct Clamp {
 	inline const fixpoint operator()(const fixpoint& x) const {
 		return clamp(x);
@@ -42,21 +38,6 @@ struct Tile {
 		return frac(x);
 	}
 };
-
-//struct WrapFac {
-//	enum WrapMode {TILE, CLAMP};
-//	static const WrapFunc& create(const int type) {
-//		if (type == TILE) {
-//			static const Clamp clamp;
-//			return clamp;
-//		} else {
-//			static const Tile tile;
-//			return tile;
-//		}
-//	}
-//};
-//
-//static const WrapFac Wrap;
 
 class Pixel {
 public:
