@@ -47,14 +47,11 @@ const char *bitmapFormatToString(const int fmt) {
 	}
 }
 
-static const complex<fixpoint> ONE(1,0);
-static const complex<fixpoint> ZERO(0,0);
-
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode, jint degree);
 }
 
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode, jint degree) {
 	int status = 0;
 
 	AndroidBitmapInfo sourceInfo;
@@ -87,14 +84,29 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		ERROR << "AndroidBitmap_lockPixels failed for dest bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
-	const BitmapSampler from(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
+
+	const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
+	const MobiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
+
+	const fixpoint angle = degree == 0 ? 0 : FIX16_2PI/degree;
+	const int n = (degree < 0 ? -degree : degree);
+	const complex<fixpoint> zeta(cos(angle), sin(angle));
+	complex<fixpoint> param(view(complex<fixpoint>(x,y)));
+	const MobiusTrans factor(ONE,-param,-conj(param),ONE);
+	BlaschkeMap blas;
+	for (int i = 1; i < n; ++i) {
+		blas *= MobiusTrans::hyperbolicIsometry(param);
+		param *= zeta;
+	}
+
+	const BlaschkeMap map(-view|blas|view|-zoom);
+
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
-	const MoebiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
-	const MoebiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
-	const complex<fixpoint> param(view(complex<fixpoint>(x,y)));
-	const MoebiusTrans blaschke(ONE,-param,-conj(param),ONE);
-	const MoebiusTrans map(view.inv()*blaschke*view*zoom.inv());
-	to.pullbackSampledBitmap(map, from);
+	if (wrapMode == 0) {
+		to.pullbackSampledBitmap(map, createSampler(sourcePtr, sourceInfo.width, sourceInfo.height, Tile()));
+	} else {
+		to.pullbackSampledBitmap(map, createSampler(sourcePtr, sourceInfo.width, sourceInfo.height, Clamp()));
+	}
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {

@@ -23,19 +23,22 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     }
     public static final class drawable {
         public static final int celtic=0x7f020000;
-        public static final int ic_btn_arrows=0x7f020001;
-        public static final int ic_btn_arrows_off=0x7f020002;
-        public static final int ic_btn_arrows_on=0x7f020003;
-        public static final int ic_launcher=0x7f020004;
+        public static final int ic_btn_arrows_off=0x7f020001;
+        public static final int ic_btn_arrows_on=0x7f020002;
+        public static final int ic_btn_minus_sign=0x7f020003;
+        public static final int ic_btn_plus_sign=0x7f020004;
+        public static final int ic_launcher=0x7f020005;
+        public static final int selector_ic_btn_arrows=0x7f020006;
     }
     public static final class id {
-        public static final int addParamMenuItem=0x7f080003;
         public static final int bitmapperView=0x7f080000;
+        public static final int decDegreeMenuItem=0x7f080004;
+        public static final int incDegreeMenuItem=0x7f080003;
         public static final int loadImage=0x7f080001;
-        public static final int shouldClamp=0x7f080006;
-        public static final int shouldTile=0x7f080005;
+        public static final int shouldClamp=0x7f080007;
+        public static final int shouldTile=0x7f080006;
         public static final int touchMode=0x7f080002;
-        public static final int wrapModeMenuGroup=0x7f080004;
+        public static final int wrapModeMenuGroup=0x7f080005;
     }
     public static final class layout {
         public static final int activity_conform=0x7f030000;
@@ -45,8 +48,9 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     }
     public static final class string {
         public static final int app_name=0x7f050000;
-        public static final int default_bitmap_desc=0x7f050006;
-        public static final int menu_item_add_param=0x7f050005;
+        public static final int default_bitmap_desc=0x7f050007;
+        public static final int menu_item_dec_degree=0x7f050006;
+        public static final int menu_item_inc_degree=0x7f050005;
         public static final int menu_item_load_image=0x7f050001;
         public static final int menu_item_pan_mode=0x7f050004;
         public static final int menu_item_should_clamp=0x7f050003;

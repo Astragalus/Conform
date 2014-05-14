@@ -8,16 +8,22 @@
     </item>
     <item
         android:id="@+id/touchMode"
-        android:icon="@drawable/ic_btn_arrows"
+        android:icon="@drawable/selector_ic_btn_arrows"
         android:showAsAction="ifRoom"
         android:title="@string/menu_item_pan_mode"
         android:checkable="true"
         android:checked="false">
     </item>
     <item
-        android:id="@+id/addParamMenuItem"
-        android:icon="@android:drawable/btn_plus"
-        android:title="@string/menu_item_add_param"
+        android:id="@+id/incDegreeMenuItem"
+        android:icon="@drawable/ic_btn_plus_sign"
+        android:title="@string/menu_item_inc_degree"
+        android:showAsAction="ifRoom">
+    </item>
+    <item
+        android:id="@+id/decDegreeMenuItem"
+        android:icon="@drawable/ic_btn_minus_sign"
+        android:title="@string/menu_item_dec_degree"
         android:showAsAction="ifRoom">
     </item>
     <group
