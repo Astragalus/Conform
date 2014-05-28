@@ -89,13 +89,13 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	const MobiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
 
 	const fixpoint angle = degree == 0 ? 0 : FIX16_2PI/degree;
-	const int n = (degree < 0 ? -degree : degree);
 	const complex<fixpoint> zeta(cos(angle), sin(angle));
 	complex<fixpoint> param(view(complex<fixpoint>(x,y)));
-	const MobiusTrans factor(ONE,-param,-conj(param),ONE);
+	const int n = (degree < 0) ? -degree : degree;
+
 	BlaschkeMap blas;
-	for (int i = 1; i < n; ++i) {
-		blas *= MobiusTrans::hyperbolicIsometry(param);
+	for (int i = 0; i < n; ++i) {
+		blas *= (degree < 0) ? -MobiusTrans::hyperbolicIsometry(param) : MobiusTrans::hyperbolicIsometry(param);
 		param *= zeta;
 	}
 
