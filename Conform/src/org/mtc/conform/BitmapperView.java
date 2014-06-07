@@ -1,5 +1,8 @@
 package org.mtc.conform;
 
+import java.util.Observable;
+import java.util.Observer;
+
 import org.mtc.conform.math.ComplexAffineTrans;
 import org.mtc.conform.math.ComplexArrayBacked;
 
@@ -23,7 +26,7 @@ public class BitmapperView extends ImageView {
 
 	public static final String TAG = "Conform";
 
-	public static class ParamHolder {
+	public static class ParamHolder implements Observer {
 		public final static int MAX_PARAMS = 6;
 		public final static float RADIUS = 100.0f;
 		ParamHolder(final TransformationState transStateHolder) {
@@ -32,6 +35,7 @@ public class BitmapperView extends ImageView {
 			m_paramScreenAsComplex = new ComplexArrayBacked(m_paramScreenCoords);
 			m_paramNormAsComplex = new ComplexArrayBacked(m_paramsNormCoords);
 			m_trans = transStateHolder;
+			m_trans.addObserver(this);
 		}
 		
 		private int findParamIndexWithinRadius(float scrX, float scrY) {
@@ -49,16 +53,25 @@ public class BitmapperView extends ImageView {
 			return m_size;
 		}
 		
-		public void setParamScreenCoords(int i, float newX, float newY) {
-			m_paramScreenCoords[2*i] = newX;
-			m_paramScreenCoords[2*i+1] = newY;
-			updateParamScreenToNorm(i);
+		public void setParamScreenCoords(int paramNum, float newX, float newY) {
+			final int i = 2*paramNum;
+			m_paramScreenCoords[i] = newX;
+			m_paramScreenCoords[i+1] = newY;
+			m_trans.screenToNormalized((ComplexArrayBacked)m_paramScreenAsComplex.atIndex(i), (ComplexArrayBacked)m_paramNormAsComplex.atIndex(i));
 		}
 		
-		private void updateParamScreenToNorm(int paramIndex) {
-			//TD:
+		private void updateAllScreenCoords() {
+			m_trans.normalizedToScreen(m_paramsNormCoords, m_paramScreenCoords);
 		}
 		
+		/**
+		 * TransformationState has changed.
+		 */
+		@Override
+		public void update(Observable observable, Object data) {
+			updateAllScreenCoords();
+		}
+
 		private int m_size;
 		final private float[] m_paramsNormCoords;
 		final private float[] m_paramScreenCoords;
@@ -67,14 +80,19 @@ public class BitmapperView extends ImageView {
 		final private TransformationState m_trans;
 	}
 	
-	private class TransformationState {
+	private class TransformationState extends Observable {
 		final private Matrix m_screenToSquareMat = new Matrix();
 		final private Matrix m_squareToScreenMat = new Matrix();
-		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;	
+		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
 		final private ComplexArrayBacked m_complexView = new ComplexArrayBacked();
 		final private ComplexArrayBacked m_pivot = new ComplexArrayBacked(new float[] {1.0f,0.0f});
 		final private ComplexArrayBacked m_translate = new ComplexArrayBacked(new float[] {0.0f,0.0f});
 
+		@Override
+		public void addObserver(Observer observer) {
+			super.addObserver(observer);
+		}
+		
 		public void updateMatrices() {
 			m_squareToScreenMat.set(getImageMatrix());
 			m_squareToScreenMat.preScale(m_drawWidth, m_drawHeight);
@@ -83,11 +101,11 @@ public class BitmapperView extends ImageView {
 		}
 		public void scale(final float s, final float x, final float y) {
 			m_currTrans.postMult(ComplexAffineTrans.scaling(s, screenToNormalized(m_pivot.re(x).im(y))));
-			//now need to update all params
+			notifyObservers();
 		}
 		public void translate(final float x, final float y) {
 			m_currTrans.postMult(ComplexAffineTrans.translation(screenToNormalized(m_translate.re(-x).im(-y))));
-			//now need to update all params
+			notifyObservers();
 		}
 		public ComplexArrayBacked screenToNormalized(ComplexArrayBacked srcdst) {
 			screenToNormalized(srcdst, srcdst);
