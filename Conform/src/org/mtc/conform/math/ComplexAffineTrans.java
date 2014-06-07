@@ -7,31 +7,31 @@ public class ComplexAffineTrans {
 	public final Complex sc;
 	public final Complex tr;
 
-	final public static ComplexAffineTrans IDENT = new ComplexAffineTrans(Complex.ONE, Complex.ZERO);
+	final public static ComplexAffineTrans IDENT = new ComplexAffineTrans(IComplex.ONE, IComplex.ZERO);
 
-	public ComplexAffineTrans(final Complex scaling, final Complex translation) {
-		sc = new Complex(scaling);
-		tr = new Complex(translation);
+	public ComplexAffineTrans(final IComplex one, final IComplex zero) {
+		sc = new Complex(one);
+		tr = new Complex(zero);
 	}
 	public ComplexAffineTrans(final ComplexAffineTrans t) {
 		this(t.sc,t.tr);
 	}
 
-	public Complex apply(final Complex z) {
+	public IComplex apply(final IComplex z) {
 		return z.mult(sc).add(tr);
 	}
 	
-	public Complex applyInverse(final Complex z) {
+	public IComplex applyInverse(final IComplex z) {
 		return z.sub(tr).div(sc);
 	}
 	
-	public static ComplexAffineTrans translation(final Complex z) {
-		return new ComplexAffineTrans(Complex.ONE, z);
+	public static ComplexAffineTrans translation(final IComplex z) {
+		return new ComplexAffineTrans(IComplex.ONE, z);
 	}
 	public static ComplexAffineTrans translation(final float x, final float y) {
 		return translation(new Complex(x,y));
 	}
-	public static ComplexAffineTrans scaling(final float s, final Complex p) {
+	public static ComplexAffineTrans scaling(final float s, final IComplex p) {
 		return new ComplexAffineTrans(new Complex(s), new Complex(p).mult(1.0f-s));
 	}
 	public static ComplexAffineTrans scaling(final float s, final float x, final float y) {

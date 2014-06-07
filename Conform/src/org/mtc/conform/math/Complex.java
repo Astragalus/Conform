@@ -1,18 +1,13 @@
 package org.mtc.conform.math;
 
-import java.util.Locale;
 
 /**
  * A class representing a complex number with float components.  Warning: very mutable (for speed)!
  */
-public class Complex {
+public class Complex implements IComplex {
 	
 	public float re;
 	public float im;
-	
-	final public static Complex ONE = new Complex(1.0f,0.0f);
-	final public static Complex ZERO = new Complex(0.0f,0.0f);
-	final public static Complex I = new Complex(0.0f,1.0f);
 	
 	public Complex(final float re, final float im) {
 		this.re = re;
@@ -26,11 +21,42 @@ public class Complex {
 		this.re = z.re;
 		this.im = z.im;
 	}
-	public Complex assignFrom(final Complex z) {
+	public Complex(final IComplex z) {
+		this.re = z.re();
+		this.im = z.im();
+	}
+	
+	@Override
+	public IComplex assignTo(IComplex w) {
+		w.assignFrom(re,im);
+		return this;
+	}
+	
+	@Override
+	public IComplex assignFrom(final IComplex z) {
+		z.assignTo(this);
+		return this;
+	}
+	
+	@Override
+	public IComplex assignFrom(final Complex z) {
 		re = z.re;
 		im = z.im;
 		return this;
 	}
+	@Override
+	public IComplex assignFrom(final float re, final float im) {
+		this.re = re;
+		this.im = im;
+		return this;
+	}
+	@Override
+	public IComplex assignFrom(final float[] arr) {
+		this.re = arr[0];
+		this.im = arr[1];
+		return this;
+	}
+	@Override
 	public Complex mult(final Complex z) {
 		final float newre = re*z.re + im*z.im;
 		final float newim = re*z.im + im*z.re;
@@ -38,45 +64,52 @@ public class Complex {
 		im = newim;
 		return this;
 	}
+	@Override
 	public Complex mult(final float s) {
 		re *= s;
 		im *= s;
 		return this;
 	}
-	public Complex add(final Complex z) {
+	@Override
+	public IComplex add(final Complex z) {
 		re += z.re;
 		im += z.im;
 		return this;
 	}
-	public Complex sub(final Complex z) {
+	@Override
+	public IComplex sub(final Complex z) {
 		re -= z.re;
 		im -= z.im;
 		return this;
 	}
-	public Complex neg() {
+	@Override
+	public IComplex neg() {
 		re = -re;
 		im = -im;
 		return this;
 	}
+	@Override
 	public Complex inv() {
 		final float normsq = re*re+im*im;
 		re /= normsq;
 		im /= -normsq;
 		return this;
 	}
-	public Complex conj() {
+	@Override
+	public IComplex conj() {
 		im = -im;
 		return this;
 	}
-	public Complex div(final Complex z) {
+	@Override
+	public IComplex div(final Complex z) {
 		return mult(new Complex(z).inv());
 	}
+
 	@Override
 	public String toString() {
-		return String.format(Locale.ENGLISH, "(%3.4f+i%3.4f", re, im);
-//		final StringBuilder sb = new StringBuilder();
-//		sb.append('(').append(re).append("+i").append(im).append(')');
-//		return sb.toString();
+		final StringBuilder sb = new StringBuilder();
+		sb.append('(').append(re).append("+i").append(im).append(')');
+		return sb.toString();
 	}
 	@Override
 	public boolean equals(Object o) {
@@ -86,4 +119,13 @@ public class Complex {
 	public int hashCode() {
 		return Float.floatToIntBits(re) + 7*Float.floatToIntBits(im);
 	}
+	
+	@Override
+	public float re() {return re;}
+	@Override
+	public Complex re(float r) {re = r;return this;}
+	@Override
+	public float im() {return im;}
+	@Override
+	public Complex im(float i) {im = i;return this;}
 }
