@@ -54,6 +54,8 @@ extern "C" {
 JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jobject paramBuffer, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
 	int status = 0;
 
+	float const* buf = static_cast<float *>(env->GetDirectBufferAddress(paramBuffer));
+
 	AndroidBitmapInfo sourceInfo;
 	status = AndroidBitmap_getInfo(env, bmSource, &sourceInfo);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
@@ -88,15 +90,12 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
 	const MobiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
 
-	const fixpoint angle = degree == 0 ? 0 : FIX16_2PI/degree;
-	const complex<fixpoint> zeta(cos(angle), sin(angle));
-	complex<fixpoint> param(view(complex<fixpoint>(x,y)));
-	const int n = (degree < 0) ? -degree : degree;
+	//complex<fixpoint> param(view(complex<fixpoint>(x,y)));
+	//complex<fixpoint> param(view(complex<fixpoint>(0.0f,0.0f)));
 
 	BlaschkeMap blas;
-	for (int i = 0; i < n; ++i) {
-		blas *= (degree < 0) ? -MobiusTrans::hyperbolicIsometry(param) : MobiusTrans::hyperbolicIsometry(param);
-		param *= zeta;
+	for (int i = 0; i < numParams; ++i) {
+		blas *= MobiusTrans::hyperbolicIsometry(view(complex<fixpoint>(buf[2*i],buf[2*i+1])));
 	}
 
 	const BlaschkeMap map(-view|blas|view|-zoom);

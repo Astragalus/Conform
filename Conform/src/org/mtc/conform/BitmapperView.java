@@ -1,6 +1,7 @@
 package org.mtc.conform;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.Observable;
 import java.util.Observer;
@@ -57,7 +58,9 @@ public class BitmapperView extends ImageView {
 		public final static float RADIUS = 100.0f;
 
 		public ParamHolder(final TransformationState transStateHolder) {
-			m_paramBuffer = ByteBuffer.allocateDirect(2*MAX_PARAMS*Float.SIZE/8).asFloatBuffer();
+			final ByteBuffer bbuf = ByteBuffer.allocateDirect(2*MAX_PARAMS*Float.SIZE/8);
+			bbuf.order(ByteOrder.nativeOrder());
+			m_paramBuffer = bbuf.asFloatBuffer();
 			m_screenCoords = new float[MAX_PARAMS];
 			m_normCoords = m_paramBuffer.array();
 			m_size = 1;
