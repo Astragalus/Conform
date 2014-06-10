@@ -27,7 +27,7 @@ public class ComplexArrayBacked implements IComplex {
 	public int getIndex() {
 		return this.idx;
 	}
-	public IComplex atIndex(int i) {
+	public ComplexArrayBacked atIndex(int i) {
 		this.idx = i;
 		return this;
 	}

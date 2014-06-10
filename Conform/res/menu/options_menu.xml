@@ -15,15 +15,15 @@
         android:checked="false">
     </item>
     <item
-        android:id="@+id/incDegreeMenuItem"
+        android:id="@+id/addParamMenuItem"
         android:icon="@drawable/ic_btn_plus_sign"
-        android:title="@string/menu_item_inc_degree"
+        android:title="@string/menu_item_add_param"
         android:showAsAction="ifRoom">
     </item>
     <item
-        android:id="@+id/decDegreeMenuItem"
+        android:id="@+id/removeParamMenuItem"
         android:icon="@drawable/ic_btn_minus_sign"
-        android:title="@string/menu_item_dec_degree"
+        android:title="@string/menu_item_remove_zero"
         android:showAsAction="ifRoom">
     </item>
     <group

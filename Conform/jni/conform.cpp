@@ -48,10 +48,10 @@ const char *bitmapFormatToString(const int fmt) {
 }
 
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode, jint degree);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jobject paramBuffer, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
 }
 
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloat x, jfloat y, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode, jint degree) {
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jobject paramBuffer, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
 	int status = 0;
 
 	AndroidBitmapInfo sourceInfo;
