@@ -1,8 +1,5 @@
 package org.mtc.conform;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -53,16 +50,13 @@ public class BitmapperView extends ImageView {
 		}
 	}
 	
-	public static class ParamHolder implements Observer {
+	public class ParamHolder implements Observer {
 		public final static int MAX_PARAMS = 6;
 		public final static float RADIUS = 100.0f;
 
 		public ParamHolder(final TransformationState transStateHolder) {
-			final ByteBuffer bbuf = ByteBuffer.allocateDirect(2*MAX_PARAMS*Float.SIZE/8);
-			bbuf.order(ByteOrder.nativeOrder());
-			m_paramBuffer = bbuf.asFloatBuffer();
 			m_screenCoords = new float[MAX_PARAMS];
-			m_normCoords = m_paramBuffer.array();
+			m_normCoords = new float[MAX_PARAMS];
 			m_size = 1;
 			m_screenComplexView = new ComplexArrayBacked(m_screenCoords);
 			m_normComplexView = new ComplexArrayBacked(m_normCoords);
@@ -72,7 +66,9 @@ public class BitmapperView extends ImageView {
 		
 		public void addParamScreenCoords(float scrX, float scrY) {
 			if (m_size < MAX_PARAMS) {
-				m_screenComplexView.atIndex(++m_size).assignFrom(scrX, scrY);
+				m_screenComplexView.atIndex(m_size).assignFrom(scrX, scrY);
+				updateNormCoordsFor(m_size);
+				++m_size;
 			}
 		}
 		
@@ -109,15 +105,21 @@ public class BitmapperView extends ImageView {
 			final int i = 2*paramNum;
 			m_screenCoords[i] = newX;
 			m_screenCoords[i+1] = newY;
-			m_trans.screenToNormalized((ComplexArrayBacked)m_screenComplexView.atIndex(i), (ComplexArrayBacked)m_normComplexView.atIndex(i));
+			updateNormCoordsFor(paramNum);
 		}
 		
+		private void updateNormCoordsFor(int paramNum) {
+			m_trans.screenToNormalized(m_screenComplexView.atIndex(2*paramNum), m_normComplexView.atIndex(2*paramNum));
+		}
+
 		private void updateScreenCoordsFor(int paramNum) {
-			m_trans.normalizedToScreen(m_normComplexView.atIndex(paramNum), m_screenComplexView.atIndex(paramNum));
+			m_trans.normalizedToScreen(m_normComplexView.atIndex(2*paramNum), m_screenComplexView.atIndex(2*paramNum));
+			invalidate();
 		}
 		
 		private void updateAllScreenCoords() {
 			m_trans.normalizedToScreen(m_normCoords, m_screenCoords, m_size);
+			invalidate();
 		}
 		
 		/**
@@ -127,13 +129,13 @@ public class BitmapperView extends ImageView {
 		public void update(Observable observable, Object data) {
 			updateAllScreenCoords();
 		}
-
-		public FloatBuffer getParamBuffer() {
-			return m_paramBuffer;
-		}
 		
 		public int getSize() {
 			return m_size;
+		}
+		
+		public float[] getParams() {
+			return m_normCoords;
 		}
 		
 		private int m_size;
@@ -142,7 +144,6 @@ public class BitmapperView extends ImageView {
 		final private ComplexArrayBacked m_normComplexView;
 		final private ComplexArrayBacked m_screenComplexView;
 		final private TransformationState m_trans;
-		final private FloatBuffer m_paramBuffer;
 	}
 	
 	private class TransformationState extends Observable {
@@ -224,13 +225,17 @@ public class BitmapperView extends ImageView {
 			return processed;
 		}
 		private boolean onParamChgEvent(MotionEvent event) {
-
+			final int numPtrs = event.getPointerCount();
 			switch (event.getAction() & MotionEvent.ACTION_MASK) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_MOVE:
-				final int i = m_paramHolder.findParamIndex(event.getX(), event.getY());
-				m_paramHolder.setParamScreenCoords(i, event.getX(), event.getY());
-				return true;
+				final int ptrIdx = event.getActionIndex();
+				final int i = m_paramHolder.findParamIndex(event.getX(ptrIdx), event.getY(ptrIdx));
+				Log.d(TAG, "onParamChgEvent: numPtrs=" + numPtrs + " actionPtr=" + ptrIdx + " paramIdx=" + i +" x=" + event.getX(ptrIdx)+" y=" + event.getY(ptrIdx));
+				if (i >= 0) {
+					m_paramHolder.setParamScreenCoords(i, event.getX(ptrIdx), event.getY(ptrIdx));
+					return true;
+				}
 			}
 			return false;
 		}
@@ -289,7 +294,6 @@ public class BitmapperView extends ImageView {
 		m_destBitmap = Bitmap.createBitmap(m_drawWidth, m_drawHeight, Config.ARGB_8888);
 		m_destBitmap.eraseColor(0);
 		m_destBitmap.setHasAlpha(false);
-		m_destBitmap.setPremultiplied(true);
 		setImageBitmap(m_destBitmap);
 		m_transState = new TransformationState();
 		m_paramHolder = new ParamHolder(m_transState);
@@ -305,8 +309,8 @@ public class BitmapperView extends ImageView {
 		if (count == 0)
 			start = System.currentTimeMillis();
 		
-//		m_destBitmap.eraseColor(0);
-		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getParamBuffer(), m_paramHolder.getSize(), m_transState.m_currTrans, m_wrapMode);
+		m_destBitmap.eraseColor(0);
+		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getParams(), m_paramHolder.getSize(), m_transState.m_currTrans, m_wrapMode);
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
 		
 		m_paramHolder.applyToScreenParams(m_poleDrawOp.setCanvas(canvas));

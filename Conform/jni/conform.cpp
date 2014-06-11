@@ -48,14 +48,13 @@ const char *bitmapFormatToString(const int fmt) {
 }
 
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jobject paramBuffer, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
 }
 
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jobject paramBuffer, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
 	int status = 0;
 
-	float const* buf = static_cast<float *>(env->GetDirectBufferAddress(paramBuffer));
-
+	jfloat *params = env->GetFloatArrayElements(paramArray,0);
 	AndroidBitmapInfo sourceInfo;
 	status = AndroidBitmap_getInfo(env, bmSource, &sourceInfo);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
@@ -95,7 +94,7 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {
-		blas *= MobiusTrans::hyperbolicIsometry(view(complex<fixpoint>(buf[2*i],buf[2*i+1])));
+		blas *= MobiusTrans::hyperbolicIsometry(view(complex<fixpoint>(params[2*i],params[2*i+1])));
 	}
 
 	const BlaschkeMap map(-view|blas|view|-zoom);
@@ -117,6 +116,6 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		ERROR << "AndroidBitmap_unlockPixels failed for dest bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
+	env->ReleaseFloatArrayElements(paramArray, params, 0);
 	return status;
 }
-
