@@ -36,6 +36,8 @@ public interface IComplex {
 	public abstract IComplex conj();
 
 	public abstract IComplex div(Complex z);
+	
+	public abstract float distSq(IComplex z);
 
 	public abstract String toString();
 

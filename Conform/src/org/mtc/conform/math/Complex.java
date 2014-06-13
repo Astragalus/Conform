@@ -106,6 +106,13 @@ public class Complex implements IComplex {
 	}
 
 	@Override
+	public float distSq(IComplex z) {
+		final float re = z.re() - this.re;
+		final float im = z.im() - this.im;
+		return re*re+im*im;
+	}
+	
+	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append('(').append(re).append("+i").append(im).append(')');

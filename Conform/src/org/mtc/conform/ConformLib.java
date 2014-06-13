@@ -1,7 +1,5 @@
 package org.mtc.conform;
 
-import java.nio.FloatBuffer;
-
 import org.mtc.conform.math.ComplexAffineTrans;
 
 import android.graphics.Bitmap;

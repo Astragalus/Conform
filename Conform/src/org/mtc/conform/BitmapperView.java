@@ -3,8 +3,10 @@ package org.mtc.conform;
 import java.util.Observable;
 import java.util.Observer;
 
+import org.mtc.conform.math.Complex;
 import org.mtc.conform.math.ComplexAffineTrans;
-import org.mtc.conform.math.ComplexArrayBacked;
+import org.mtc.conform.math.ComplexArray;
+import org.mtc.conform.math.ComplexArray.ComplexElement;
 import org.mtc.conform.math.IComplex;
 
 import android.content.Context;
@@ -55,11 +57,11 @@ public class BitmapperView extends ImageView {
 		public final static float RADIUS = 100.0f;
 
 		public ParamHolder(final TransformationState transStateHolder) {
-			m_screenCoords = new float[MAX_PARAMS];
-			m_normCoords = new float[MAX_PARAMS];
+			m_screenCoords = new ComplexArray(MAX_PARAMS);
+			m_normCoords = new ComplexArray(MAX_PARAMS);
 			m_size = 1;
-			m_screenComplexView = new ComplexArrayBacked(m_screenCoords);
-			m_normComplexView = new ComplexArrayBacked(m_normCoords);
+			m_screenComplexView = m_screenCoords.element();
+			m_normComplexView = m_normCoords.element();
 			m_trans = transStateHolder;
 			m_trans.addObserver(this);
 		}
@@ -86,28 +88,28 @@ public class BitmapperView extends ImageView {
 			}
 		}
 		
-		public int findParamIndex(float scrX, float scrY) {
-			for (int i = 0; i < m_size; ++i) {
-				final float distX = m_screenCoords[2*i]-scrX;
-				final float distY = m_screenCoords[2*i+1]-scrY;
-				if (distX*distX + distY*distY <= RADIUS*RADIUS) {
-					return i;
+		public ComplexElement findParamIndex(float scrX, float scrY) {
+			final Complex at = new Complex(scrX, scrY);
+			for (IComplex param : m_screenCoords) {
+				if (param.distSq(at) <= RADIUS*RADIUS) {
+					return (ComplexElement) param;
 				}
 			}
-			return -1;
+			return null;
 		}
 		
 		public int size() {
 			return m_size;
 		}
 		
-		public void setParamScreenCoords(int paramNum, float newX, float newY) {
-			final int i = 2*paramNum;
-			m_screenCoords[i] = newX;
-			m_screenCoords[i+1] = newY;
-			updateNormCoordsFor(paramNum);
+		public void setParamScreenCoords(final ComplexElement param, float newX, float newY) {
+			updateNormCoordsFor(param.re(newX).im(newY));
 		}
 		
+		private void updateNormCoordsFor(final ComplexElement scrParam) {
+			m_trans.screenToNormalized(scrParam, m_normComplexView.parallelTo(scrParam));
+		}
+
 		private void updateNormCoordsFor(int paramNum) {
 			m_trans.screenToNormalized(m_screenComplexView.atIndex(2*paramNum), m_normComplexView.atIndex(2*paramNum));
 		}
@@ -118,7 +120,7 @@ public class BitmapperView extends ImageView {
 		}
 		
 		private void updateAllScreenCoords() {
-			m_trans.normalizedToScreen(m_normCoords, m_screenCoords, m_size);
+			m_trans.normalizedToScreen(m_normCoords, m_screenCoords);
 			invalidate();
 		}
 		
@@ -135,14 +137,19 @@ public class BitmapperView extends ImageView {
 		}
 		
 		public float[] getParams() {
-			return m_normCoords;
+			return m_normCoords.arr;
+		}
+		
+		@Override
+		public String toString() {
+			return "size[" + m_size + "]";
 		}
 		
 		private int m_size;
-		final private float[] m_normCoords;
-		final private float[] m_screenCoords;
-		final private ComplexArrayBacked m_normComplexView;
-		final private ComplexArrayBacked m_screenComplexView;
+		final private ComplexArray m_normCoords;
+		final private ComplexArray m_screenCoords;
+		final private ComplexElement m_normComplexView;
+		final private ComplexElement m_screenComplexView;
 		final private TransformationState m_trans;
 	}
 	
@@ -150,9 +157,8 @@ public class BitmapperView extends ImageView {
 		final private Matrix m_screenToSquareMat = new Matrix();
 		final private Matrix m_squareToScreenMat = new Matrix();
 		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
-		final private ComplexArrayBacked m_complexView = new ComplexArrayBacked();
-		final private ComplexArrayBacked m_pivot = new ComplexArrayBacked(new float[] {1.0f,0.0f});
-		final private ComplexArrayBacked m_translate = new ComplexArrayBacked(new float[] {0.0f,0.0f});
+		final private ComplexElement m_pivot = new ComplexArray(1).element();
+		final private ComplexElement m_translate = new ComplexArray(1).element();
 
 		@Override
 		public void addObserver(Observer observer) {
@@ -173,32 +179,24 @@ public class BitmapperView extends ImageView {
 			m_currTrans.postMult(ComplexAffineTrans.translation(screenToNormalized(m_translate.re(-x).im(-y))));
 			notifyObservers();
 		}
-		public ComplexArrayBacked screenToNormalized(ComplexArrayBacked srcdst) {
+		public ComplexElement screenToNormalized(ComplexElement srcdst) {
 			screenToNormalized(srcdst, srcdst);
 			return srcdst;
 		}
-		public void screenToNormalized(ComplexArrayBacked src, ComplexArrayBacked dst) {
+		public void screenToNormalized(ComplexElement src, ComplexElement dst) {
 			m_screenToSquareMat.mapVectors(dst.getBackingArray(), dst.getIndex(), src.getBackingArray(), src.getIndex(), 1);
 			m_currTrans.applyInverse(dst);
 		}	
-		public void screenToNormalized(float[] src, float[] dst, int count) {
-			m_screenToSquareMat.mapVectors(dst, src);
-			m_complexView.setBackingArray(dst); 
-			for (int i = 0; i < 2*count; i += 2) {
-				m_currTrans.applyInverse(m_complexView.atIndex(i));				
-			}
-		}
-		public void normalizedToScreen(ComplexArrayBacked src, ComplexArrayBacked dst) {
+		public void normalizedToScreen(ComplexElement src, ComplexElement dst) {
 			m_currTrans.apply(dst.assignFrom(src));
 			m_squareToScreenMat.mapVectors(dst.getBackingArray(), dst.getIndex(), src.getBackingArray(), src.getIndex(), 1);
 		}
-		public void normalizedToScreen(float[] src, float[] dst, int count) {
-			System.arraycopy(src, 0, dst, 0, 2*count);
-			m_complexView.setBackingArray(dst);
-			for (int i = 0; i < count; i += 2) {
-				m_currTrans.apply(m_complexView.atIndex(i));				
+		public void normalizedToScreen(final ComplexArray src, final ComplexArray dst) {
+			dst.copyFrom(src);
+			for (IComplex z : dst) {
+				m_currTrans.apply(z);
 			}
-			m_squareToScreenMat.mapVectors(dst, src);
+			m_squareToScreenMat.mapVectors(dst.arr);
 		}
 	};
 
@@ -225,15 +223,13 @@ public class BitmapperView extends ImageView {
 			return processed;
 		}
 		private boolean onParamChgEvent(MotionEvent event) {
-			final int numPtrs = event.getPointerCount();
 			switch (event.getAction() & MotionEvent.ACTION_MASK) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_MOVE:
 				final int ptrIdx = event.getActionIndex();
-				final int i = m_paramHolder.findParamIndex(event.getX(ptrIdx), event.getY(ptrIdx));
-				Log.d(TAG, "onParamChgEvent: numPtrs=" + numPtrs + " actionPtr=" + ptrIdx + " paramIdx=" + i +" x=" + event.getX(ptrIdx)+" y=" + event.getY(ptrIdx));
-				if (i >= 0) {
-					m_paramHolder.setParamScreenCoords(i, event.getX(ptrIdx), event.getY(ptrIdx));
+				final ComplexElement param = m_paramHolder.findParamIndex(event.getX(ptrIdx), event.getY(ptrIdx));
+				if (param != null) {
+					m_paramHolder.setParamScreenCoords(param, event.getX(ptrIdx), event.getY(ptrIdx));
 					return true;
 				}
 			}
