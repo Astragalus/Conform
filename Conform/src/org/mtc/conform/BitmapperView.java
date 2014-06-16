@@ -1,7 +1,5 @@
 package org.mtc.conform;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -182,12 +180,12 @@ public class BitmapperView extends ImageView {
 			return srcdst;
 		}
 		public void screenToNormalized(ComplexElement src, ComplexElement dst) {
-			m_screenToSquareMat.mapVectors(dst.getBackingArray(), dst.getIndex(), src.getBackingArray(), src.getIndex(), 1);
+			m_screenToSquareMat.mapVectors(dst.getBackingArray(), dst.getIndex()<<1, src.getBackingArray(), src.getIndex()<<1, 1);
 			m_currTrans.applyInverse(dst);
 		}	
 		public void normalizedToScreen(ComplexElement src, ComplexElement dst) {
 			m_currTrans.apply(dst.assignFrom(src));
-			m_squareToScreenMat.mapVectors(dst.getBackingArray(), dst.getIndex(), src.getBackingArray(), src.getIndex(), 1);
+			m_squareToScreenMat.mapVectors(dst.getBackingArray(), dst.getIndex()<<1, src.getBackingArray(), src.getIndex()<<1, 1);
 		}
 		public void normalizedToScreen(final ComplexArray src, final ComplexArray dst) {
 			dst.copyFrom(src);
