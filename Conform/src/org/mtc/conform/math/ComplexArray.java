@@ -6,15 +6,18 @@ import java.util.Iterator;
 public class ComplexArray implements Collection<IComplex> {
 
 	final public float[] arr;
+	final public int capacity;
 	private int size;
 	
 	public ComplexArray(final int capacity) {
+		this.capacity = capacity;
 		arr = new float[2*capacity];
 		size = 0;
 	}
 	
 	public ComplexArray(final ComplexArray other) {
-		arr = new float[other.arr.length];
+		capacity = other.capacity;
+		arr = new float[capacity];
 		System.arraycopy(other.arr, 0, arr, 0, other.size*2);
 		size = other.size;
 	}
@@ -33,7 +36,10 @@ public class ComplexArray implements Collection<IComplex> {
 	public Iterator<IComplex> iterator() {
 		return new ComplexElement();
 	}
-
+	
+	public ComplexElement atIndexOf(final ComplexElement other) {
+		return element().parallelTo(other);
+	}
 	/**
 	 * A class representing a complex number with float components.  Warning: very mutable (for speed)!
 	 */
@@ -71,22 +77,22 @@ public class ComplexArray implements Collection<IComplex> {
 
 		@Override
 		public ComplexElement assignFrom(Complex z) {
-			arr[idx<<1] = z.re;
-			arr[idx<<1+1] = z.im;
+			arr[idx*2] = z.re;
+			arr[idx*2+1] = z.im;
 			return this;
 		}
 		
 		@Override
 		public ComplexElement assignFrom(final float re, final float im) {
-			arr[idx<<1] = re;
-			arr[idx<<1+1] = im;
+			arr[idx*2] = re;
+			arr[idx*2+1] = im;
 			return this;
 		}
 		
 		@Override
 		public ComplexElement assignFrom(final float[] arr) {
-			arr[idx<<1] = arr[0];
-			arr[idx<<1+1] = arr[1];
+			arr[idx*2] = arr[0];
+			arr[idx*2+1] = arr[1];
 			return this;
 		}
 		@Override
@@ -110,8 +116,8 @@ public class ComplexArray implements Collection<IComplex> {
 			return this;
 		}
 		public ComplexElement add(final ComplexElement z) {
-			arr[idx*2] += z.getBackingArray()[z.idx<<1];
-			arr[idx*2+1] += z.getBackingArray()[z.idx<<1+1];
+			arr[idx*2] += z.getBackingArray()[z.idx*2];
+			arr[idx*2+1] += z.getBackingArray()[z.idx*2+1];
 			return this;
 		}
 		@Override
@@ -122,8 +128,8 @@ public class ComplexArray implements Collection<IComplex> {
 		}
 
 		public ComplexElement sub(final ComplexElement z) {
-			arr[idx*2] -= z.getBackingArray()[z.idx<<1];
-			arr[idx*2+1] -= z.getBackingArray()[z.idx<<1+1];
+			arr[idx*2] -= z.getBackingArray()[z.idx*2];
+			arr[idx*2+1] -= z.getBackingArray()[z.idx*2+1];
 			return this;
 		}
 		@Override
@@ -160,8 +166,9 @@ public class ComplexArray implements Collection<IComplex> {
 		
 		@Override
 		public String toString() {
-			final StringBuilder sb = new StringBuilder();
-			sb.append('(').append(arr[idx*2]).append("+i").append(arr[idx*2+1]).append(')');
+			final StringBuilder sb = new StringBuilder("Element");
+			sb.append('(').append(idx).append(')');
+			sb.append('[').append(arr[idx*2]).append("+i").append(arr[idx*2+1]).append(']');
 			return sb.toString();
 		}
 		@Override
@@ -184,7 +191,7 @@ public class ComplexArray implements Collection<IComplex> {
 
 		@Override
 		public boolean hasNext() {
-			return idx < size-1;
+			return idx < size;
 		}
 
 		@Override
@@ -200,7 +207,7 @@ public class ComplexArray implements Collection<IComplex> {
 	}
 
 	public ComplexElement append() {
-		return element().atIndex(size*2 < arr.length ? size++ : size);
+		return element().atIndex( size<capacity ? size++ : size);
 	}
 	
 	@Override

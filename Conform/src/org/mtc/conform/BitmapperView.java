@@ -18,7 +18,6 @@ import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
@@ -60,22 +59,24 @@ public class BitmapperView extends ImageView {
 		public ParamHolder(final TransformationState transStateHolder) {
 			m_screenCoords = new ComplexArray(MAX_PARAMS);
 			m_normCoords = new ComplexArray(MAX_PARAMS);
-			m_screenComplexView = m_screenCoords.append().assignFrom(IComplex.ZERO);
-			m_normComplexView = m_normCoords.append().assignFrom(IComplex.ZERO);
 			m_trans = transStateHolder;
 			m_trans.addObserver(this);
+			addParamNormValue(IComplex.ZERO);
 		}
 		
 		public void addParamScreenCoords(float scrX, float scrY) {
-			m_screenCoords.append().assignFrom(scrX, scrY);
-			updateNormCoordsFor(m_normCoords.append().getIndex());
-			++m_size;
+			m_trans.screenToNormalized(m_screenCoords.append().assignFrom(scrX, scrY), m_normCoords.append());
+			invalidate();
 		}
 		
 		public void addParamNormCoords(float im, float re) {
-			m_normCoords.append().assignFrom(re, im);
-			updateScreenCoordsFor(m_screenCoords.append().getIndex());
-			++m_size;
+			m_trans.normalizedToScreen(m_normCoords.append().assignFrom(re, im), m_screenCoords.append());
+			invalidate();
+		}
+		
+		public void addParamNormValue(IComplex z) {
+			m_trans.normalizedToScreen(m_normCoords.append().assignFrom(z), m_screenCoords.append());			
+			invalidate();
 		}
 		
 		public void applyToScreenParams(final Operation operation) {
@@ -85,37 +86,36 @@ public class BitmapperView extends ImageView {
 		}
 		
 		public ComplexElement findParamNearCoords(float scrX, float scrY) {
+			ComplexElement result = null;
 			final Complex at = new Complex(scrX, scrY);
+			final StringBuilder logSb = new StringBuilder("Finding param near [").append(at).append(']');
 			for (IComplex param : m_screenCoords) {
+				final float distSq = param.distSq(at);
+				logSb.append(" - [").append(param).append("] is at distSq ").append(distSq);
 				if (param.distSq(at) <= RADIUS*RADIUS) {
-					return (ComplexElement) param;
-				}
+					logSb.append(" <= ").append(RADIUS*RADIUS);
+					result = (ComplexElement) param;
+					logSb.append(" - found param ").append(result);
+					break;
+				} 
 			}
-			return null;
+			Log.d(TAG, logSb.toString());
+			return result;
 		}
 		
 		public int size() {
-			return m_size;
+			return m_normCoords.size();
 		}
 		
-		public void setParamScreenCoords(final ComplexElement param, float newX, float newY) {
-			updateNormCoordsFor(param.re(newX).im(newY));
-		}
-		
-		private void updateNormCoordsFor(final ComplexElement scrParam) {
-			m_trans.screenToNormalized(scrParam, m_normComplexView.parallelTo(scrParam));
-		}
-
-		private void updateNormCoordsFor(int paramNum) {
-			m_trans.screenToNormalized(m_screenComplexView.atIndex(paramNum), m_normComplexView.atIndex(paramNum));
-		}
-
-		private void updateScreenCoordsFor(int paramNum) {
-			m_trans.normalizedToScreen(m_normComplexView.atIndex(paramNum), m_screenComplexView.atIndex(paramNum));
+		public void setParamScreenCoords(final ComplexElement scrParam, float scrX, float scrY) {
+			final ComplexElement normParam = m_normCoords.atIndexOf(scrParam.re(scrX).im(scrY));
+			m_trans.screenToNormalized(scrParam, normParam);
+			Log.d(TAG, "Set screen coords:" + scrParam + " --> norm coords: " + normParam);
 			invalidate();
 		}
 		
 		private void updateAllScreenCoords() {
+			Log.d(TAG, "updating all screen coords");
 			m_trans.normalizedToScreen(m_normCoords, m_screenCoords);
 			invalidate();
 		}
@@ -128,24 +128,30 @@ public class BitmapperView extends ImageView {
 			updateAllScreenCoords();
 		}
 		
-		public int getSize() {
-			return m_size;
-		}
-		
 		public ComplexArray getNormalizedParams() {
 			return m_normCoords;
 		}
 		
 		@Override
 		public String toString() {
-			return "size[" + m_size + "]";
+			final StringBuilder sb = new StringBuilder();
+			sb.append("Params").append('(').append(size()).append(')');
+			sb.append("Normal[");
+			for (IComplex norm : m_normCoords) {
+				sb.append(norm.toString()).append(' ');
+			}
+			sb.append(']');
+			
+			sb.append("Screen[");
+			for (IComplex scr : m_screenCoords) {
+				sb.append(scr.toString()).append(' ');
+			}
+			sb.append(']');
+			return sb.toString();
 		}
 		
-		private int m_size;
 		final private ComplexArray m_normCoords;
 		final private ComplexArray m_screenCoords;
-		final private ComplexElement m_normComplexView;
-		final private ComplexElement m_screenComplexView;
 		final private TransformationState m_trans;
 	}
 	
@@ -200,12 +206,10 @@ public class BitmapperView extends ImageView {
 		private final ScaleGestureDetector m_zoomDetector;
 		private final GestureDetector m_gestureDetector;
 		private final TransformationState m_state;
-		private final SparseArray<ComplexElement> m_ptrToParamIdx;
 		public BitmapperTouchHandler(final Context context, final TransformationState state) {
 			m_zoomDetector = new ScaleGestureDetector(context, this);
 			m_gestureDetector = new GestureDetector(getContext(), this);
 			m_state = state;
-			m_ptrToParamIdx = new SparseArray<ComplexElement>();
 		}
 		public boolean onTouchEvent(MotionEvent event) {
 			boolean processed = false;
@@ -221,24 +225,15 @@ public class BitmapperView extends ImageView {
 			return processed;
 		}
 		private boolean onParamChgEvent(MotionEvent event) {
-			final int ptrIdx = event.getActionIndex();
 			switch (event.getAction() & MotionEvent.ACTION_MASK) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_MOVE:
-				ComplexElement param = m_ptrToParamIdx.get(ptrIdx);
-				if (param == null) {
-					param = m_paramHolder.findParamNearCoords(event.getX(ptrIdx), event.getY(ptrIdx));
-					if (param != null) {
-						m_ptrToParamIdx.put(ptrIdx, param);
-					} else {
-						return false;
-					}
+				final ComplexElement param = m_paramHolder.findParamNearCoords(event.getX(), event.getY());
+				if (param != null) {
+					m_paramHolder.setParamScreenCoords(param, event.getX(), event.getY());
 				}
-				m_paramHolder.setParamScreenCoords(param, event.getX(ptrIdx), event.getY(ptrIdx));
 				return true;
 			case MotionEvent.ACTION_UP:
-				m_ptrToParamIdx.delete(ptrIdx);
-				break;
 			}
 			return false;
 		}
@@ -311,6 +306,8 @@ public class BitmapperView extends ImageView {
 	protected void onDraw(final Canvas canvas) {	
 		if (count == 0)
 			start = System.currentTimeMillis();
+		
+		Log.d(TAG, m_paramHolder.toString());
 		
 		m_destBitmap.eraseColor(0);
 		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.m_currTrans, m_wrapMode);
