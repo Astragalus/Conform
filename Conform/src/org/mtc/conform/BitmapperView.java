@@ -1,5 +1,7 @@
 package org.mtc.conform;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -18,6 +20,7 @@ import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
@@ -59,36 +62,31 @@ public class BitmapperView extends ImageView {
 		public ParamHolder(final TransformationState transStateHolder) {
 			m_screenCoords = new ComplexArray(MAX_PARAMS);
 			m_normCoords = new ComplexArray(MAX_PARAMS);
-			m_size = 1;
-			m_screenComplexView = m_screenCoords.element();
-			m_normComplexView = m_normCoords.element();
+			m_screenComplexView = m_screenCoords.append().assignFrom(IComplex.ZERO);
+			m_normComplexView = m_normCoords.append().assignFrom(IComplex.ZERO);
 			m_trans = transStateHolder;
 			m_trans.addObserver(this);
 		}
 		
 		public void addParamScreenCoords(float scrX, float scrY) {
-			if (m_size < MAX_PARAMS) {
-				m_screenComplexView.atIndex(m_size).assignFrom(scrX, scrY);
-				updateNormCoordsFor(m_size);
-				++m_size;
-			}
+			m_screenCoords.append().assignFrom(scrX, scrY);
+			updateNormCoordsFor(m_normCoords.append().getIndex());
+			++m_size;
 		}
 		
 		public void addParamNormCoords(float im, float re) {
-			if (m_size < MAX_PARAMS) {
-				m_normComplexView.atIndex(m_size).assignFrom(re, im);
-				updateScreenCoordsFor(m_size);
-				++m_size;
-			}
+			m_normCoords.append().assignFrom(re, im);
+			updateScreenCoordsFor(m_screenCoords.append().getIndex());
+			++m_size;
 		}
 		
 		public void applyToScreenParams(final Operation operation) {
-			for (int i = 0; i < 2*m_size; i+=2) {
-				operation.operate(m_screenComplexView.atIndex(i));
+			for (IComplex z : m_screenCoords) {
+				operation.operate(z);
 			}
 		}
 		
-		public ComplexElement findParamIndex(float scrX, float scrY) {
+		public ComplexElement findParamNearCoords(float scrX, float scrY) {
 			final Complex at = new Complex(scrX, scrY);
 			for (IComplex param : m_screenCoords) {
 				if (param.distSq(at) <= RADIUS*RADIUS) {
@@ -111,11 +109,11 @@ public class BitmapperView extends ImageView {
 		}
 
 		private void updateNormCoordsFor(int paramNum) {
-			m_trans.screenToNormalized(m_screenComplexView.atIndex(2*paramNum), m_normComplexView.atIndex(2*paramNum));
+			m_trans.screenToNormalized(m_screenComplexView.atIndex(paramNum), m_normComplexView.atIndex(paramNum));
 		}
 
 		private void updateScreenCoordsFor(int paramNum) {
-			m_trans.normalizedToScreen(m_normComplexView.atIndex(2*paramNum), m_screenComplexView.atIndex(2*paramNum));
+			m_trans.normalizedToScreen(m_normComplexView.atIndex(paramNum), m_screenComplexView.atIndex(paramNum));
 			invalidate();
 		}
 		
@@ -136,8 +134,8 @@ public class BitmapperView extends ImageView {
 			return m_size;
 		}
 		
-		public float[] getParams() {
-			return m_normCoords.arr;
+		public ComplexArray getNormalizedParams() {
+			return m_normCoords;
 		}
 		
 		@Override
@@ -204,10 +202,12 @@ public class BitmapperView extends ImageView {
 		private final ScaleGestureDetector m_zoomDetector;
 		private final GestureDetector m_gestureDetector;
 		private final TransformationState m_state;
+		private final SparseArray<ComplexElement> m_ptrToParamIdx;
 		public BitmapperTouchHandler(final Context context, final TransformationState state) {
 			m_zoomDetector = new ScaleGestureDetector(context, this);
 			m_gestureDetector = new GestureDetector(getContext(), this);
 			m_state = state;
+			m_ptrToParamIdx = new SparseArray<ComplexElement>();
 		}
 		public boolean onTouchEvent(MotionEvent event) {
 			boolean processed = false;
@@ -223,15 +223,24 @@ public class BitmapperView extends ImageView {
 			return processed;
 		}
 		private boolean onParamChgEvent(MotionEvent event) {
+			final int ptrIdx = event.getActionIndex();
 			switch (event.getAction() & MotionEvent.ACTION_MASK) {
 			case MotionEvent.ACTION_DOWN:
 			case MotionEvent.ACTION_MOVE:
-				final int ptrIdx = event.getActionIndex();
-				final ComplexElement param = m_paramHolder.findParamIndex(event.getX(ptrIdx), event.getY(ptrIdx));
-				if (param != null) {
-					m_paramHolder.setParamScreenCoords(param, event.getX(ptrIdx), event.getY(ptrIdx));
-					return true;
+				ComplexElement param = m_ptrToParamIdx.get(ptrIdx);
+				if (param == null) {
+					param = m_paramHolder.findParamNearCoords(event.getX(ptrIdx), event.getY(ptrIdx));
+					if (param != null) {
+						m_ptrToParamIdx.put(ptrIdx, param);
+					} else {
+						return false;
+					}
 				}
+				m_paramHolder.setParamScreenCoords(param, event.getX(ptrIdx), event.getY(ptrIdx));
+				return true;
+			case MotionEvent.ACTION_UP:
+				m_ptrToParamIdx.delete(ptrIdx);
+				break;
 			}
 			return false;
 		}
@@ -274,7 +283,7 @@ public class BitmapperView extends ImageView {
 	ConformLib.WrapMode m_wrapMode = ConformLib.WrapMode.TILE;
 	TouchMode m_touchMode = TouchMode.PARAM;
 	
-	private final DrawOp m_poleDrawOp;
+	private final DrawOp m_poleDrawer;
 	private final ParamHolder m_paramHolder;
 
 	long start;
@@ -297,7 +306,7 @@ public class BitmapperView extends ImageView {
 		final Paint paint = new Paint();
 		paint.setAntiAlias(false);
 		paint.setARGB(180, 255, 110, 130);
-		m_poleDrawOp = new DrawOp(paint, RADIUS);
+		m_poleDrawer = new DrawOp(paint, RADIUS);
 	}
 	
 	@Override
@@ -306,10 +315,10 @@ public class BitmapperView extends ImageView {
 			start = System.currentTimeMillis();
 		
 		m_destBitmap.eraseColor(0);
-		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getParams(), m_paramHolder.getSize(), m_transState.m_currTrans, m_wrapMode);
+		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.m_currTrans, m_wrapMode);
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
 		
-		m_paramHolder.applyToScreenParams(m_poleDrawOp.setCanvas(canvas));
+		m_paramHolder.applyToScreenParams(m_poleDrawer.setCanvas(canvas));
 		
 		++count;
 		if ((time = System.currentTimeMillis()-start) < 3000) {

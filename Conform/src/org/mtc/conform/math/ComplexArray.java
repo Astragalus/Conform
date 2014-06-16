@@ -58,39 +58,39 @@ public class ComplexArray implements Collection<IComplex> {
 		}
 		
 		@Override
-		public IComplex assignTo(IComplex w) {
+		public ComplexElement assignTo(IComplex w) {
 			w.assignFrom(arr[idx<<1],arr[idx<<1+1]);
 			return this;
 		}
 		
 		@Override
-		public IComplex assignFrom(final IComplex z) {
+		public ComplexElement assignFrom(final IComplex z) {
 			z.assignTo(this);
 			return this;
 		}
 
 		@Override
-		public IComplex assignFrom(Complex z) {
+		public ComplexElement assignFrom(Complex z) {
 			arr[idx<<1] = z.re;
 			arr[idx<<1+1] = z.im;
 			return this;
 		}
 		
 		@Override
-		public IComplex assignFrom(final float re, final float im) {
+		public ComplexElement assignFrom(final float re, final float im) {
 			arr[idx<<1] = re;
 			arr[idx<<1+1] = im;
 			return this;
 		}
 		
 		@Override
-		public IComplex assignFrom(final float[] arr) {
+		public ComplexElement assignFrom(final float[] arr) {
 			arr[idx<<1] = arr[0];
 			arr[idx<<1+1] = arr[1];
 			return this;
 		}
 		@Override
-		public IComplex mult(final Complex z) {
+		public ComplexElement mult(final Complex z) {
 			final float re = arr[idx<<1];
 			final float im = arr[idx<<1+1];		
 			arr[idx<<1] = re*z.re + im*z.im;
@@ -104,30 +104,30 @@ public class ComplexArray implements Collection<IComplex> {
 			return this;
 		}
 		@Override
-		public IComplex add(Complex z) {
+		public ComplexElement add(Complex z) {
 			arr[idx<<1] += z.re;
 			arr[idx<<1+1] += z.im;
 			return this;
 		}
-		public IComplex add(final ComplexElement z) {
+		public ComplexElement add(final ComplexElement z) {
 			arr[idx<<1] += z.getBackingArray()[z.idx<<1];
 			arr[idx<<1+1] += z.getBackingArray()[z.idx<<1+1];
 			return this;
 		}
 		@Override
-		public IComplex sub(Complex z) {
+		public ComplexElement sub(Complex z) {
 			arr[idx<<1] -= z.re;
 			arr[idx<<1+1] -= z.im;
 			return this;
 		}
 
-		public IComplex sub(final ComplexElement z) {
+		public ComplexElement sub(final ComplexElement z) {
 			arr[idx<<1] -= z.getBackingArray()[z.idx<<1];
 			arr[idx<<1+1] -= z.getBackingArray()[z.idx<<1+1];
 			return this;
 		}
 		@Override
-		public IComplex neg() {
+		public ComplexElement neg() {
 			arr[idx<<1] = -arr[idx<<1];
 			arr[idx<<1+1] = -arr[idx<<1+1];
 			return this;
@@ -142,12 +142,12 @@ public class ComplexArray implements Collection<IComplex> {
 			return this;
 		}
 		@Override
-		public IComplex conj() {
+		public ComplexElement conj() {
 			arr[idx<<1+1] = -arr[idx<<1+1];
 			return this;
 		}
 		@Override
-		public IComplex div(final Complex z) {
+		public ComplexElement div(final Complex z) {
 			return mult(new Complex(z).inv());
 		}
 
@@ -199,6 +199,10 @@ public class ComplexArray implements Collection<IComplex> {
 		}
 	}
 
+	public ComplexElement append() {
+		return element().atIndex(size < arr.length ? size++ : size);
+	}
+	
 	@Override
 	public boolean add(IComplex object) {
 		if (size<arr.length) {
