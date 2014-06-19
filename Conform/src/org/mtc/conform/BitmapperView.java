@@ -61,7 +61,9 @@ public class BitmapperView extends ImageView {
 			m_normCoords = new ComplexArray(MAX_PARAMS);
 			m_trans = transStateHolder;
 			m_trans.addObserver(this);
-			addParamNormValue(new Complex(0.5f, 0.5f));
+			Log.d(TAG,"Before:"+this.toString());
+			addParamNormCoords(0.5f, 0.5f);
+			Log.d(TAG,"After:"+this.toString());
 		}
 		
 		public void addParamScreenCoords(float scrX, float scrY) {
@@ -73,12 +75,7 @@ public class BitmapperView extends ImageView {
 			m_trans.normalizedToScreen(m_normCoords.append().assignFrom(re, im), m_screenCoords.append());
 			invalidate();
 		}
-		
-		public void addParamNormValue(IComplex z) {
-			m_trans.normalizedToScreen(m_normCoords.append().assignFrom(z), m_screenCoords.append());			
-			invalidate();
-		}
-		
+
 		public void applyToScreenParams(final Operation operation) {
 			for (IComplex z : m_screenCoords) {
 				operation.operate(z);
@@ -159,8 +156,8 @@ public class BitmapperView extends ImageView {
 		final private Matrix m_screenToSquareMat = new Matrix();
 		final private Matrix m_squareToScreenMat = new Matrix();
 		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
-		final private ComplexElement m_pivot = new ComplexArray(1).element();
-		final private ComplexElement m_translate = new ComplexArray(1).element();
+		final private ComplexElement m_pivot = new ComplexArray(1).front();
+		final private ComplexElement m_translate = new ComplexArray(1).front();
 
 		@Override
 		public void addObserver(Observer observer) {
@@ -197,8 +194,10 @@ public class BitmapperView extends ImageView {
 			m_currTrans.applyInverse(dst);
 		}	
 		public void normalizedToScreen(ComplexElement src, ComplexElement dst) {
+			Log.d(TAG,"norm2scr before: src[" + src.getParent() + "], [" + dst.getParent() + "]");
 			m_currTrans.apply(dst.assignFrom(src));
 			m_squareToScreenMat.mapPoints(dst.getBackingArray(), dst.getIndex()<<1, src.getBackingArray(), src.getIndex()<<1, 1);
+			Log.d(TAG,"norm2scr after: src[" + src.getParent() + "], [" + dst.getParent() + "]");
 		}
 		public void normalizedToScreen(final ComplexArray src, final ComplexArray dst) {
 			dst.copyFrom(src);

@@ -94,8 +94,11 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {
-		blas *= MobiusTrans::hyperbolicIsometry(view(complex<fixpoint>(params[2*i],params[2*i+1])));
+		const complex<fixpoint> param(params[2*i],params[2*i+1]);
+		DEBUG << "param" << (i+1) << "[" << param << "] ";
+		blas *= MobiusTrans::hyperbolicIsometry(view(param));
 	}
+	DEBUG << endl;
 
 	const BlaschkeMap map(-view|blas|view|-zoom);
 
