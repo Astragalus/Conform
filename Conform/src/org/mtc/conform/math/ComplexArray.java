@@ -45,6 +45,14 @@ public class ComplexArray implements Collection<IComplex> {
 		return front().parallelTo(other);
 	}
 	
+	private final ComplexElement asComplex = new ComplexElement();
+	//probably should be synchronized or something, but I make the rules around here muahahaha!!!
+	public void apply(final IComplexActor action) {
+		for (asComplex.idx = 0; asComplex.idx < size<<1; asComplex.idx += 2) {
+			action.actOn(asComplex);
+		}
+	}
+	
 	public class ComplexIterator implements Iterator<IComplex> {
 		private int i;
 		@Override public boolean hasNext() {

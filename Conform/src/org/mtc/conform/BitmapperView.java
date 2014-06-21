@@ -8,6 +8,7 @@ import org.mtc.conform.math.ComplexAffineTrans;
 import org.mtc.conform.math.ComplexArray;
 import org.mtc.conform.math.ComplexArray.ComplexElement;
 import org.mtc.conform.math.IComplex;
+import org.mtc.conform.math.IComplexActor;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -28,26 +29,22 @@ import android.widget.ImageView;
 public class BitmapperView extends ImageView {
 
 	public static final String TAG = "Conform";
-
-	private static abstract class Operation {
-		abstract void operate(IComplex param);
-	}
 	
-	private static class DrawOp extends Operation {
+	private static class ParamDrawer implements IComplexActor {
 		private Canvas canvas;
 		private final Paint paint;
 		private final int radius;
 		
-		DrawOp(final Paint paint, final int radius) {
+		ParamDrawer(final Paint paint, final int radius) {
 			this.paint = paint;
 			this.radius = radius;
 		}
-		DrawOp setCanvas(final Canvas canvas) {
+		ParamDrawer setCanvas(final Canvas canvas) {
 			this.canvas = canvas;
 			return this;
 		}
 		@Override
-		void operate(IComplex param) {
+		public void actOn(IComplex param) {
 			canvas.drawCircle(param.re(), param.im(), radius, paint);
 		}
 	}
@@ -76,10 +73,8 @@ public class BitmapperView extends ImageView {
 			invalidate();
 		}
 
-		public void applyToScreenParams(final Operation operation) {
-			for (IComplex z : m_screenCoords) {
-				operation.operate(z);
-			}
+		public void applyScreenCoords(final IComplexActor action) {
+			m_screenCoords.apply(action);
 		}
 		
 		public ComplexElement findParamNearCoords(float scrX, float scrY) {
@@ -122,6 +117,7 @@ public class BitmapperView extends ImageView {
 		 */
 		@Override
 		public void update(Observable observable, Object data) {
+			Log.d(TAG, "received update, transforming normalized to screen coords");
 			updateAllScreenCoords();
 		}
 		
@@ -153,22 +149,28 @@ public class BitmapperView extends ImageView {
 	}
 	
 	private class TransformationState extends Observable {
+		class Transformer implements IComplexActor {
+			@Override
+			public void actOn(IComplex param) {
+				m_currTrans.apply(param);
+			}
+		}
+
 		final private Matrix m_screenToSquareMat = new Matrix();
 		final private Matrix m_squareToScreenMat = new Matrix();
 		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
 		final private ComplexElement m_pivot = new ComplexArray(1).front();
 		final private ComplexElement m_translate = new ComplexArray(1).front();
-
-		@Override
-		public void addObserver(Observer observer) {
-			super.addObserver(observer);
-		}
+		final private Transformer m_transformer = new Transformer();
+		private boolean m_isValid = false;
 		
 		public void updateMatrices() {
 			m_squareToScreenMat.set(getImageMatrix());
 			m_squareToScreenMat.preScale(m_drawWidth, m_drawHeight);
 			getImageMatrix().invert(m_screenToSquareMat);
 			m_screenToSquareMat.postScale(1.0f/m_drawWidth, 1.0f/m_drawHeight);
+			m_isValid = true;
+			notifyObservers();
 			Log.d(TAG,"updateMatrices: square->screen[" + m_squareToScreenMat.toShortString() + "], screen->square[" + m_screenToSquareMat.toShortString() + "]");
 		}
 		public void scale(final float s, final float x, final float y) {
@@ -194,17 +196,22 @@ public class BitmapperView extends ImageView {
 			m_currTrans.applyInverse(dst);
 		}	
 		public void normalizedToScreen(ComplexElement src, ComplexElement dst) {
-			Log.d(TAG,"norm2scr before: src[" + src.getParent() + "], [" + dst.getParent() + "]");
-			m_currTrans.apply(dst.assignFrom(src));
-			m_squareToScreenMat.mapPoints(dst.getBackingArray(), dst.getIndex()<<1, src.getBackingArray(), src.getIndex()<<1, 1);
-			Log.d(TAG,"norm2scr after: src[" + src.getParent() + "], [" + dst.getParent() + "]");
+			if (m_isValid) {
+				Log.d(TAG,"norm2scr before: src[" + src.getParent() + "], [" + dst.getParent() + "]");
+				m_currTrans.apply(dst.assignFrom(src));
+				m_squareToScreenMat.mapPoints(dst.getBackingArray(), dst.getIndex()<<1, src.getBackingArray(), src.getIndex()<<1, 1);
+				Log.d(TAG,"norm2scr after: src[" + src.getParent() + "], [" + dst.getParent() + "]");
+			} else {
+				Log.d(TAG,"norm2scr: trans state invalid, skipping");
+			}
 		}
 		public void normalizedToScreen(final ComplexArray src, final ComplexArray dst) {
-			dst.copyFrom(src);
-			for (IComplex z : dst) {
-				m_currTrans.apply(z);
+			if (m_isValid) {
+				dst.copyFrom(src).apply(m_transformer);
+				m_squareToScreenMat.mapPoints(dst.arr);
+			} else {
+				Log.d(TAG, "norm2scr: trans state invalid, skipping");
 			}
-			m_squareToScreenMat.mapPoints(dst.arr);
 		}
 	};
 
@@ -288,7 +295,7 @@ public class BitmapperView extends ImageView {
 	ConformLib.WrapMode m_wrapMode = ConformLib.WrapMode.TILE;
 	TouchMode m_touchMode = TouchMode.PARAM;
 	
-	private final DrawOp m_poleDrawer;
+	private final ParamDrawer m_poleDrawer;
 	private final ParamHolder m_paramHolder;
 
 	long start;
@@ -311,7 +318,7 @@ public class BitmapperView extends ImageView {
 		final Paint paint = new Paint();
 		paint.setAntiAlias(false);
 		paint.setARGB(180, 255, 110, 130);
-		m_poleDrawer = new DrawOp(paint, RADIUS);
+		m_poleDrawer = new ParamDrawer(paint, RADIUS);
 	}
 	
 	@Override
@@ -325,7 +332,7 @@ public class BitmapperView extends ImageView {
 		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.m_currTrans, m_wrapMode);
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
 		
-		m_paramHolder.applyToScreenParams(m_poleDrawer.setCanvas(canvas));
+		m_paramHolder.applyScreenCoords(m_poleDrawer.setCanvas(canvas));
 		
 		++count;
 		if ((time = System.currentTimeMillis()-start) < 3000) {
