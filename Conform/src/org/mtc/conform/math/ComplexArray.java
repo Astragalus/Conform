@@ -14,6 +14,12 @@ public class ComplexArray implements Collection<IComplex> {
 		arr = new float[2*capacity];
 		size = 0;
 	}
+
+	public ComplexArray(final int capacity, final int size) {
+		this.capacity = capacity;
+		arr = new float[2*capacity];
+		this.size = size;
+	}
 	
 	public ComplexArray(final ComplexArray other) {
 		capacity = other.capacity;

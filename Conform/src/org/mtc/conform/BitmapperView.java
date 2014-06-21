@@ -64,13 +64,16 @@ public class BitmapperView extends ImageView {
 		}
 		
 		public void addParamScreenCoords(float scrX, float scrY) {
-			m_trans.screenToNormalized(m_screenCoords.append().assignFrom(scrX, scrY), m_normCoords.append());
+			m_screenCoords.append().assignFrom(scrX, scrY);
+			m_normCoords.append();
+			m_trans.screenToNormalizedPoints(m_screenCoords, m_normCoords);
 			invalidate();
 		}
 		
 		public void addParamNormCoords(float re, float im) {
-			m_trans.normalizedToScreen(m_normCoords.append().assignFrom(re, im), m_screenCoords.append());
-			invalidate();
+			m_normCoords.append().assignFrom(re, im);
+			m_screenCoords.append();
+			updateScreenCoords();
 		}
 
 		public void applyScreenCoords(final IComplexActor action) {
@@ -101,14 +104,13 @@ public class BitmapperView extends ImageView {
 		
 		public void setParamScreenCoords(final ComplexElement scrParam, float scrX, float scrY) {
 			final ComplexElement normParam = m_normCoords.atIndexOf(scrParam.re(scrX).im(scrY));
-			m_trans.screenToNormalized(scrParam, normParam);
-			Log.d(TAG, "Set screen coords:" + scrParam + " --> norm coords: " + normParam);
+			m_trans.screenToNormalizedPoints(m_screenCoords, m_normCoords);
 			invalidate();
+			Log.d(TAG, "Set screen coords:" + scrParam + " --> norm coords: " + normParam);
 		}
 		
-		private void updateAllScreenCoords() {
-			Log.d(TAG, "updating all screen coords");
-			m_trans.normalizedToScreen(m_normCoords, m_screenCoords);
+		private void updateScreenCoords() {
+			m_trans.normalizedToScreenPoints(m_normCoords, m_screenCoords);
 			invalidate();
 		}
 		
@@ -118,7 +120,7 @@ public class BitmapperView extends ImageView {
 		@Override
 		public void update(Observable observable, Object data) {
 			Log.d(TAG, "received update, transforming normalized to screen coords");
-			updateAllScreenCoords();
+			updateScreenCoords();
 		}
 		
 		public ComplexArray getNormalizedParams() {
@@ -149,69 +151,65 @@ public class BitmapperView extends ImageView {
 	}
 	
 	private class TransformationState extends Observable {
-		class Transformer implements IComplexActor {
-			@Override
-			public void actOn(IComplex param) {
-				m_currTrans.apply(param);
-			}
-		}
-
 		final private Matrix m_screenToSquareMat = new Matrix();
 		final private Matrix m_squareToScreenMat = new Matrix();
 		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
-		final private ComplexElement m_pivot = new ComplexArray(1).front();
-		final private ComplexElement m_translate = new ComplexArray(1).front();
-		final private Transformer m_transformer = new Transformer();
-		private boolean m_isValid = false;
+		final private ComplexElement m_pivot = new ComplexArray(1,1).front().assignFrom(IComplex.ONE);
+		final private ComplexElement m_translate = new ComplexArray(1,1).front().assignFrom(IComplex.ZERO);
+		final private IComplexActor m_fwdTransformer = new IComplexActor() {
+			@Override
+			public void actOn(IComplex param) {
+				m_currTrans.apply(param);
+			}			
+		};
+		final private IComplexActor m_invTransformer = new IComplexActor() {			
+			@Override
+			public void actOn(IComplex param) {
+				m_currTrans.applyInverse(param);
+			}			
+		};
+
+		public TransformationState() {
+			clearChanged();
+		}
 		
 		public void updateMatrices() {
 			m_squareToScreenMat.set(getImageMatrix());
 			m_squareToScreenMat.preScale(m_drawWidth, m_drawHeight);
 			getImageMatrix().invert(m_screenToSquareMat);
 			m_screenToSquareMat.postScale(1.0f/m_drawWidth, 1.0f/m_drawHeight);
-			m_isValid = true;
+			setChanged();
 			notifyObservers();
+			setChanged();
 			Log.d(TAG,"updateMatrices: square->screen[" + m_squareToScreenMat.toShortString() + "], screen->square[" + m_screenToSquareMat.toShortString() + "]");
 		}
 		public void scale(final float s, final float x, final float y) {
 			m_currTrans.postMult(ComplexAffineTrans.scaling(s, screenToNormalizedVector(m_pivot.re(x).im(y))));
 			Log.d(TAG,"scale: s[" + s + "], pivot[" + m_pivot + "]");
 			notifyObservers();
+			setChanged();
 		}
 		public void translate(final float x, final float y) {
 			m_currTrans.postMult(ComplexAffineTrans.translation(screenToNormalizedVector(m_translate.re(-x).im(-y))));
 			Log.d(TAG,"translate: translate[" + m_translate + "]");
 			notifyObservers();
+			setChanged();
 		}
 		public ComplexElement screenToNormalizedVector(ComplexElement srcdst) {
-			screenToNormalizedVector(srcdst,srcdst);
+			screenToNormalizedVectors(srcdst.getParent(),srcdst.getParent());
 			return srcdst;
-		}	
-		public void screenToNormalizedVector(ComplexElement src, ComplexElement dst) {
-			m_screenToSquareMat.mapVectors(dst.getBackingArray(), dst.getIndex()<<1, src.getBackingArray(), src.getIndex()<<1, 1);
-			m_currTrans.applyInverse(dst);
-		}	
-		public void screenToNormalized(ComplexElement src, ComplexElement dst) {
-			m_screenToSquareMat.mapPoints(dst.getBackingArray(), dst.getIndex()<<1, src.getBackingArray(), src.getIndex()<<1, 1);
-			m_currTrans.applyInverse(dst);
-		}	
-		public void normalizedToScreen(ComplexElement src, ComplexElement dst) {
-			if (m_isValid) {
-				Log.d(TAG,"norm2scr before: src[" + src.getParent() + "], [" + dst.getParent() + "]");
-				m_currTrans.apply(dst.assignFrom(src));
-				m_squareToScreenMat.mapPoints(dst.getBackingArray(), dst.getIndex()<<1, src.getBackingArray(), src.getIndex()<<1, 1);
-				Log.d(TAG,"norm2scr after: src[" + src.getParent() + "], [" + dst.getParent() + "]");
-			} else {
-				Log.d(TAG,"norm2scr: trans state invalid, skipping");
-			}
 		}
-		public void normalizedToScreen(final ComplexArray src, final ComplexArray dst) {
-			if (m_isValid) {
-				dst.copyFrom(src).apply(m_transformer);
-				m_squareToScreenMat.mapPoints(dst.arr);
-			} else {
-				Log.d(TAG, "norm2scr: trans state invalid, skipping");
-			}
+		public void screenToNormalizedVectors(final ComplexArray src, final ComplexArray dst) {			
+			m_screenToSquareMat.mapVectors(dst.arr, src.arr);
+			dst.apply(m_invTransformer);
+		}
+		public void screenToNormalizedPoints(final ComplexArray src, final ComplexArray dst) {			
+			m_screenToSquareMat.mapPoints(dst.arr, src.arr);
+			dst.apply(m_invTransformer);
+		}
+		public void normalizedToScreenPoints(final ComplexArray src, final ComplexArray dst) {
+			dst.copyFrom(src).apply(m_fwdTransformer);
+			m_squareToScreenMat.mapPoints(dst.arr);
 		}
 	};
 
