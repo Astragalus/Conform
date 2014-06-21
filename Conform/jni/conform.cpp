@@ -95,7 +95,7 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	DEBUG << "[conform.cpp] ";
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {
-		const complex<fixpoint> param(view(complex<fixpoint>(params[i<<1],params[i<<1+1])));
+		const complex<fixpoint> param(view(complex<fixpoint>(params[2*i],params[2*i+1])));
 		DEBUG << "param" << (i+1) << "[" << param << "] ";
 		blas *= MobiusTrans::hyperbolicIsometry(param);
 	}
