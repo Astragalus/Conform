@@ -184,24 +184,20 @@ public class BitmapperView extends ImageView {
 			Log.d(TAG,"updateMatrices: square->screen[" + m_squareToScreenMat.toShortString() + "], screen->square[" + m_screenToSquareMat.toShortString() + "]");
 		}
 		public void scale(final float s, final float x, final float y) {
-			m_currTrans.postMult(ComplexAffineTrans.scaling(s, screenToNormalizedVector(m_pivot.re(x).im(y))));
+			m_currTrans.postMult(ComplexAffineTrans.scaling(s, normalizeDiffVec(m_pivot.re(x).im(y))));
 			Log.d(TAG,"scale: s[" + s + "], pivot[" + m_pivot + "]");
 			notifyObservers();
 			setChanged();
 		}
 		public void translate(final float x, final float y) {
-			m_currTrans.postMult(ComplexAffineTrans.translation(screenToNormalizedVector(m_translate.re(-x).im(-y))));
-			Log.d(TAG,"translate: translate[" + m_translate + "]");
+			m_currTrans.postMult(ComplexAffineTrans.translation(normalizeDiffVec(m_translate.re(-x).im(-y))));
 			notifyObservers();
 			setChanged();
 		}
-		public ComplexElement screenToNormalizedVector(ComplexElement srcdst) {
-			screenToNormalizedVectors(srcdst.getParent(),srcdst.getParent());
+		public ComplexElement normalizeDiffVec(ComplexElement srcdst) {
+			final ComplexArray backingArray = srcdst.getParent();
+			m_screenToSquareMat.mapVectors(backingArray.arr);
 			return srcdst;
-		}
-		public void screenToNormalizedVectors(final ComplexArray src, final ComplexArray dst) {			
-			m_screenToSquareMat.mapVectors(dst.arr, src.arr);
-			dst.apply(m_invTransformer);
 		}
 		public void screenToNormalizedPoints(final ComplexArray src, final ComplexArray dst) {			
 			m_screenToSquareMat.mapPoints(dst.arr, src.arr);
@@ -376,6 +372,7 @@ public class BitmapperView extends ImageView {
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+		Log.d(TAG, "onTouchEvent: event[" + event + "]");
 		if (m_touchHandler.onTouchEvent(event)) {
 			invalidate();
 			return true;

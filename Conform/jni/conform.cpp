@@ -55,6 +55,7 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	int status = 0;
 
 	jfloat *params = env->GetFloatArrayElements(paramArray,0);
+
 	AndroidBitmapInfo sourceInfo;
 	status = AndroidBitmap_getInfo(env, bmSource, &sourceInfo);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
@@ -91,17 +92,17 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 
 	//complex<fixpoint> param(view(complex<fixpoint>(x,y)));
 	//complex<fixpoint> param(view(complex<fixpoint>(0.0f,0.0f)));
-
+	DEBUG << "[conform.cpp] ";
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {
-		const complex<fixpoint> param(params[2*i],params[2*i+1]);
+		const complex<fixpoint> param(view(complex<fixpoint>(params[i<<1],params[i<<1+1])));
 		DEBUG << "param" << (i+1) << "[" << param << "] ";
-		blas *= MobiusTrans::hyperbolicIsometry(view(param));
+		blas *= MobiusTrans::hyperbolicIsometry(param);
 	}
 	DEBUG << endl;
+	DEBUG << "[conform.cpp] blaschke[" << blas << "]" << endl;
 
 	const BlaschkeMap map(-view|blas|view|-zoom);
-
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
 	if (wrapMode == 0) {
 		to.pullbackSampledBitmap(map, createSampler(sourcePtr, sourceInfo.width, sourceInfo.height, Tile()));
@@ -119,6 +120,8 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		ERROR << "AndroidBitmap_unlockPixels failed for dest bm: " << bitmapStatusToString(status) << endl;
 		return status;
 	}
+	
 	env->ReleaseFloatArrayElements(paramArray, params, 0);
+
 	return status;
 }

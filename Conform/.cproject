@@ -19,7 +19,7 @@
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 				<configuration artifactName="${ProjName}" buildProperties="" description="" id="com.android.toolchain.gcc.1533612966" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
 					<folderInfo id="com.android.toolchain.gcc.1533612966.1152227764" name="/" resourcePath="">
-						<toolChain id="com.android.toolchain.gcc.596670851" name="com.android.toolchain.gcc" superClass="com.android.toolchain.gcc">
+						<toolChain id="com.android.toolchain.gcc.596670851" name="com.android.toolchain.gcc" resourceTypeBasedDiscovery="true" superClass="com.android.toolchain.gcc">
 							<targetPlatform binaryParser="org.eclipse.cdt.core.ELF" id="com.android.targetPlatform.1872853855" isAbstract="false" superClass="com.android.targetPlatform"/>
 							<builder id="com.android.builder.466427571" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Android Builder" superClass="com.android.builder">
 								<outputEntries>
@@ -27,7 +27,7 @@
 								</outputEntries>
 							</builder>
 							<tool id="com.android.gcc.compiler.731224340" name="Android GCC Compiler" superClass="com.android.gcc.compiler">
-								<option id="com.android.gcc.option.includePath.1565356613" superClass="com.android.gcc.option.includePath" valueType="includePath"/>
+								<option id="com.android.gcc.option.includePath.1565356613" superClass="com.android.gcc.option.includePath"/>
 								<inputType id="com.android.gcc.inputType.388682993" superClass="com.android.gcc.inputType"/>
 							</tool>
 						</toolChain>
@@ -50,4 +50,11 @@
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.android.AndroidPerProjectProfile"/>
 		</scannerConfigBuildInfo>
 	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Default">
+			<resource resourceType="PROJECT" workspacePath="/Conform"/>
+		</configuration>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>
