@@ -19,6 +19,7 @@ import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
@@ -58,9 +59,7 @@ public class BitmapperView extends ImageView {
 			m_normCoords = new ComplexArray(MAX_PARAMS);
 			m_trans = transStateHolder;
 			m_trans.addObserver(this);
-			Log.d(TAG,"Before:"+this.toString());
 			addParamNormCoords(0.5f, 0.5f);
-			Log.d(TAG,"After:"+this.toString());
 		}
 		
 		public void addParamScreenCoords(float scrX, float scrY) {
@@ -213,12 +212,12 @@ public class BitmapperView extends ImageView {
 		private final ScaleGestureDetector m_zoomDetector;
 		private final GestureDetector m_gestureDetector;
 		private final TransformationState m_state;
-		
-		private ComplexElement currParam = null;
+		private final SparseArray<ComplexElement> m_ptrIdToParam;
 		
 		public BitmapperTouchHandler(final Context context, final TransformationState state) {
 			m_zoomDetector = new ScaleGestureDetector(context, this);
 			m_gestureDetector = new GestureDetector(getContext(), this);
+			m_ptrIdToParam = new SparseArray<ComplexElement>(5);
 			m_state = state;
 		}
 		public boolean onTouchEvent(MotionEvent event) {
@@ -235,20 +234,41 @@ public class BitmapperView extends ImageView {
 			return processed;
 		}
 		private boolean onParamChgEvent(MotionEvent event) {
-			switch (event.getAction() & MotionEvent.ACTION_MASK) {
+			final int numPtrs = event.getPointerCount();
+			switch (event.getAction()) {
 			case MotionEvent.ACTION_DOWN:
-				currParam = m_paramHolder.findParamNearCoords(event.getX(), event.getY());
-				Log.d(TAG,"MotionEvent.ACTION_DOWN: getX[" + event.getX() + "], getY[" + event.getY() + "]");
-			case MotionEvent.ACTION_MOVE:
-				if (currParam != null) {
-					m_paramHolder.setParamScreenCoords(currParam, event.getX(), event.getY());
+			case MotionEvent.ACTION_POINTER_DOWN:
+				for (int i = 0; i < numPtrs; ++i) {
+					final ComplexElement param = m_paramHolder.findParamNearCoords(event.getX(i), event.getY(i));
+					if (param != null) {
+						m_ptrIdToParam.put(event.getPointerId(i), param);
+						Log.d(TAG,"MotionEvent.ACTION_DOWN: pointerId[" + event.getPointerId(i) + "] getX[" + event.getX(i) + "], getY[" + event.getY(i) + "] param[" + param + "]");
+						return true;
+					}
 				}
-				Log.d(TAG,"MotionEvent.ACTION_MOVE: getX[" + event.getX() + "], getY[" + event.getY() + "]");
-				return true;
+				return false;
+			case MotionEvent.ACTION_MOVE:
+				for (int i = 0; i < numPtrs; ++i) {
+					final ComplexElement param = m_ptrIdToParam.get(event.getPointerId(i));
+					if (param != null) {
+						m_paramHolder.setParamScreenCoords(param, event.getX(i), event.getY(i));
+						Log.d(TAG,"MotionEvent.ACTION_MOVE: pointerId[" + event.getPointerId(i) + "] getX[" + event.getX(i) + "], getY[" + event.getY(i) + "] param[" + param + "]");
+						return true;
+					}
+				}
+				return false;
+			case MotionEvent.ACTION_POINTER_UP:
+				for (int i = 0; i < numPtrs; ++i) {
+					m_ptrIdToParam.remove(event.getPointerId(i));
+				}
+				return false;
 			case MotionEvent.ACTION_UP:
-				currParam = null;
+			case MotionEvent.ACTION_CANCEL:
+				m_ptrIdToParam.clear();
+				return false;
+			default:
+				return false;
 			}
-			return false;
 		}
 		@Override
 		public boolean onScale(ScaleGestureDetector detector) {

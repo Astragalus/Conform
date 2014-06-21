@@ -90,8 +90,6 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
 	const MobiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
 
-	//complex<fixpoint> param(view(complex<fixpoint>(x,y)));
-	//complex<fixpoint> param(view(complex<fixpoint>(0.0f,0.0f)));
 	DEBUG << "[conform.cpp] ";
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {

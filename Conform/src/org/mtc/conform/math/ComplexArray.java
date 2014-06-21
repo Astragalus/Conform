@@ -1,9 +1,8 @@
 package org.mtc.conform.math;
 
-import java.util.Collection;
 import java.util.Iterator;
 
-public class ComplexArray implements Collection<IComplex> {
+public class ComplexArray implements Iterable<IComplex> {
 
 	final public float[] arr;
 	final public int capacity;
@@ -40,11 +39,6 @@ public class ComplexArray implements Collection<IComplex> {
 	
 	public ComplexElement at(final int location) {
 		return new ComplexElement(location);
-	}
-	
-	@Override
-	public ComplexIterator iterator() {
-		return new ComplexIterator();
 	}
 	
 	public ComplexElement atIndexOf(final ComplexElement other) {
@@ -262,6 +256,10 @@ public class ComplexArray implements Collection<IComplex> {
 		}
 	}
 
+	public int size() {
+		return size;
+	}
+	
 	public ComplexElement append() {
 		if (size < capacity) {
 			return at(size++);
@@ -269,82 +267,31 @@ public class ComplexArray implements Collection<IComplex> {
 			return at(size); //Too many? just overwrite the last one.  Look I just work here.
 		}
 	}
-	
-	@Override
-	public boolean add(IComplex object) {
-		if (size<capacity) {
-			arr[size*2] = object.re();
-			arr[size*2+1] = object.im();
-			++size;
-			return true;
-		}
-		return false;
-	}
 
-	@Override
-	public boolean addAll(Collection<? extends IComplex> collection) {
-		return false;
-	}
-
-	@Override
-	public void clear() {
-	}
-
-	@Override
-	public boolean contains(Object object) {
-		return false;
-	}
-
-	@Override
-	public boolean containsAll(Collection<?> collection) {
-		return false;
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return size == 0;
-	}
-
-	@Override
-	public boolean remove(Object object) {
-		return false;
-	}
-
-	@Override
-	public boolean removeAll(Collection<?> collection) {
-		return false;
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> collection) {
-		return false;
-	}
-
-	@Override
-	public int size() {
-		return size;
-	}
-
-	@Override
-	public Object[] toArray() {
-		return null;
-	}
-
-	@Override
-	public <T> T[] toArray(T[] array) {
-		return null;
+	private static IComplexActor getStringifier(final StringBuilder sb) {
+		return new IComplexActor() {
+			boolean isFirst = true;
+			@Override
+			public void actOn(IComplex z) {
+				if (!isFirst) {
+					sb.append(',');
+				} else {
+					isFirst = false;
+				}
+				sb.append(z.toString());
+			}
+		};
 	}
 	
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder("ComplexArray");
-		sb.append('(').append(size).append(')');
-		sb.append('[');
-		for (IComplex z : this) {
-			sb.append(z).append(',');
-		}
-		sb.deleteCharAt(sb.length()-1);
-		sb.append(']');
-		return sb.toString();
+		final StringBuilder sb = new StringBuilder("ComplexArray[");
+		apply(getStringifier(sb));
+		return sb.append(']').toString();
+	}
+
+	@Override
+	public Iterator<IComplex> iterator() {
+		return new ComplexIterator();
 	}
 }
