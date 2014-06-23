@@ -98,6 +98,17 @@ MobiusTrans::MobiusTrans(const complex<fixpoint>& a, const complex<fixpoint>& b,
 MobiusTrans::MobiusTrans() : m_a(complex<fixpoint>(1,0)), m_b(complex<fixpoint>(0,0)), m_c(complex<fixpoint>(0,0)), m_d(complex<fixpoint>(1,0)), m_isIdentity(true) {
 }
 
+MobiusTrans::MobiusTrans(const MobiusTrans& mt) : m_a(mt.m_a), m_b(mt.m_b), m_c(mt.m_c), m_d(mt.m_d), m_isIdentity(mt.m_isIdentity) {
+}
+
+MobiusTrans& MobiusTrans::operator=(const MobiusTrans& mt) {
+	m_a=mt.m_a;
+	m_b=mt.m_b;
+	m_c=mt.m_c;
+	m_d=mt.m_d;
+	m_isIdentity=mt.m_isIdentity;
+}
+
 const MobiusTrans MobiusTrans::hyperbolicIsometry(const complex<fixpoint>& zero) {
 	return MobiusTrans(ONE,-zero,-conj(zero),ONE);
 }
@@ -134,27 +145,32 @@ BlaschkeMap::BlaschkeMap(const MobiusTrans& a) : m_factors({a}), m_numFactors(1)
 BlaschkeMap::BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b) : m_factors({a,b}), m_numFactors(2) {
 }
 
-BlaschkeMap::BlaschkeMap(const BlaschkeMap& g) : m_numFactors(g.m_numFactors) {
+BlaschkeMap::BlaschkeMap(const BlaschkeMap& g) : m_numFactors(g.m_numFactors), m_lhs(g.m_lhs), m_rhs(g.m_rhs) {
 	copy(&g.m_factors[0], &g.m_factors[0] + g.m_numFactors, &m_factors[0]);
 }
 
 const complex<fixpoint> BlaschkeMap::operator()(const complex<fixpoint> &z) const {
-	complex<fixpoint> w = m_factors[0](z);
-	for (int i = 1; i < m_numFactors; ++i) {
-		w *= m_factors[i](z);
+	const complex<fixpoint> zz = m_rhs(z);
+	complex<fixpoint> w(ONE);
+	for (int i = 0; i < m_numFactors; ++i) {
+		w *= m_factors[i](zz);
 	}
-	return w;
+	return m_lhs(w);
 }
 BlaschkeMap& operator|(const MobiusTrans& a, BlaschkeMap& b) {
-	for (int i = 0; i < b.m_numFactors; ++i) {
-		b.m_factors[i] = (a|b.m_factors[i]);
-	}
+//	for (int i = 0; i < b.m_numFactors; ++i) {
+//		b.m_factors[i] = (a|b.m_factors[i]);
+//	}
+	b.m_lhs = a;
+	DEBUG << "lhs:" << a << endl;
 	return b;
 }
 BlaschkeMap& operator|(BlaschkeMap& b, const MobiusTrans& a) {
-	for (int i = 0; i < b.m_numFactors; ++i) {
-		b.m_factors[i] = (b.m_factors[i]|a);
-	}
+//	for (int i = 0; i < b.m_numFactors; ++i) {
+//		b.m_factors[i] = (b.m_factors[i]|a);
+//	}
+	b.m_rhs = a;
+	DEBUG << "rhs:" << a << endl;
 	return b;
 }
 
@@ -174,11 +190,13 @@ BlaschkeMap& BlaschkeMap::operator*=(const MobiusTrans& a) {
 }
 
 ostream& operator<<(ostream &os, const BlaschkeMap& blasch) {
+	os << blasch.m_lhs << 'o';
 	os << blasch.m_factors[0];
 	for (int i = 1; i < BlaschkeMap::max_factors; ++i) {
 		if (!blasch.m_factors[i].isIdentity()) {
 			os << '*' << blasch.m_factors[i];
 		}
 	}
+	os << 'o' << blasch.m_rhs;
 	return os;
 }

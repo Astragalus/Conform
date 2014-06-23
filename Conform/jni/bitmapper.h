@@ -97,6 +97,8 @@ class MobiusTrans {
 public:
 	explicit MobiusTrans(const complex<fixpoint>& a, const complex<fixpoint>& b, const complex<fixpoint>& c, const complex<fixpoint>& d);
 	explicit MobiusTrans();
+	MobiusTrans(const MobiusTrans& mt);
+	MobiusTrans& operator=(const MobiusTrans& mt);
 	static const MobiusTrans hyperbolicIsometry(const complex<fixpoint>& zero);
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
 	const MobiusTrans operator|(const MobiusTrans& f) const;
@@ -128,6 +130,8 @@ public:
 private:
 	int m_numFactors;
 	MobiusTrans m_factors[max_factors];
+	MobiusTrans m_lhs;
+	MobiusTrans m_rhs;
 };
 
 
