@@ -102,8 +102,7 @@ public class BitmapperView extends ImageView {
 		}
 		
 		public void setParamScreenCoords(final ComplexElement scrParam, float scrX, float scrY) {
-			scrParam.re(scrX).im(scrY);
-			m_trans.screenToNormalizedPoints(m_screenCoords, m_normCoords);
+			m_trans.screenToNormalizedPoint(scrParam.re(scrX).im(scrY), m_normCoords.atIndexOf(scrParam));
 			invalidate();
 		}
 		
@@ -191,12 +190,16 @@ public class BitmapperView extends ImageView {
 		}
 		public ComplexElement normalizeDiffVec(ComplexElement srcdst) {
 			final ComplexArray backingArray = srcdst.getParent();
-			m_screenToSquareMat.mapVectors(backingArray.arr);
+			m_screenToSquareMat.mapVectors(backingArray.arr, 0, backingArray.arr, 0, 1);
 			return srcdst;
 		}
 		public void screenToNormalizedPoints(final ComplexArray src, final ComplexArray dst) {			
 			m_screenToSquareMat.mapPoints(dst.arr, 0, src.arr, 0, src.size);
 			dst.apply(m_invTransformer);
+		}
+		public void screenToNormalizedPoint(final ComplexElement src, final ComplexElement dst) {			
+			m_screenToSquareMat.mapPoints(dst.getParent().arr, dst.getIndex(), src.getParent().arr, src.getIndex(), 1);
+			m_invTransformer.actOn(dst);
 		}
 		public void normalizedToScreenPoints(final ComplexArray src, final ComplexArray dst) {
 			dst.copyFrom(src).apply(m_fwdTransformer);
@@ -230,6 +233,7 @@ public class BitmapperView extends ImageView {
 			return processed;
 		}
 		private boolean onParamChgEvent(MotionEvent event) {
+			boolean eventConsumed = false;
 			final int numPtrs = event.getPointerCount();
 			switch (event.getAction()) {
 			case MotionEvent.ACTION_DOWN:
@@ -238,31 +242,30 @@ public class BitmapperView extends ImageView {
 					final ComplexElement param = m_paramHolder.findParamNearCoords(event.getX(i), event.getY(i));
 					if (param != null) {
 						m_ptrIdToParam.put(event.getPointerId(i), param);
-						return true;
+						eventConsumed |= true;
 					}
 				}
-				return false;
+				break;
 			case MotionEvent.ACTION_MOVE:
 				for (int i = 0; i < numPtrs; ++i) {
 					final ComplexElement param = m_ptrIdToParam.get(event.getPointerId(i));
 					if (param != null) {
 						m_paramHolder.setParamScreenCoords(param, event.getX(i), event.getY(i));
-						return true;
+						eventConsumed |= true;
 					}
 				}
-				return false;
+				break;
+			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_POINTER_UP:
 				for (int i = 0; i < numPtrs; ++i) {
 					m_ptrIdToParam.remove(event.getPointerId(i));
 				}
-				return false;
-			case MotionEvent.ACTION_UP:
+				break;
 			case MotionEvent.ACTION_CANCEL:
 				m_ptrIdToParam.clear();
-				return false;
-			default:
-				return false;
+				break;
 			}
+			return eventConsumed;
 		}
 		@Override
 		public boolean onScale(ScaleGestureDetector detector) {
@@ -325,7 +328,7 @@ public class BitmapperView extends ImageView {
 		m_touchHandler = new BitmapperTouchHandler(context, m_transState);
 		final Paint paint = new Paint();
 		paint.setAntiAlias(false);
-		paint.setARGB(180, 255, 110, 130);
+		paint.setARGB(255, 255, 55, 178);
 		m_poleDrawer = new ParamDrawer(paint, RADIUS);
 	}
 	
