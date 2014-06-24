@@ -49,7 +49,7 @@ public class BitmapperView extends ImageView {
 			canvas.drawCircle(param.re(), param.im(), radius, paint);
 		}
 	}
-	
+
 	public class ParamHolder implements Observer {
 		public final static int MAX_PARAMS = 6;
 		public final static float RADIUS = 100.0f;
@@ -195,12 +195,12 @@ public class BitmapperView extends ImageView {
 			return srcdst;
 		}
 		public void screenToNormalizedPoints(final ComplexArray src, final ComplexArray dst) {			
-			m_screenToSquareMat.mapPoints(dst.arr, src.arr);
+			m_screenToSquareMat.mapPoints(dst.arr, 0, src.arr, 0, src.size);
 			dst.apply(m_invTransformer);
 		}
 		public void normalizedToScreenPoints(final ComplexArray src, final ComplexArray dst) {
 			dst.copyFrom(src).apply(m_fwdTransformer);
-			m_squareToScreenMat.mapPoints(dst.arr);
+			m_squareToScreenMat.mapPoints(dst.arr, 0, dst.arr, 0, dst.size);
 		}
 	};
 
@@ -306,10 +306,10 @@ public class BitmapperView extends ImageView {
 	private final ParamDrawer m_poleDrawer;
 	private final ParamHolder m_paramHolder;
 
-//	long start;
-//	long time;
-//	int count;
-//	float fps;
+	long start;
+	long time;
+	int count;
+	float fps;
 	
 	public static final int RADIUS = 10;
 	
@@ -331,20 +331,20 @@ public class BitmapperView extends ImageView {
 	
 	@Override
 	protected void onDraw(final Canvas canvas) {	
-//		if (count == 0)
-//			start = System.currentTimeMillis();
+		if (count == 0)
+			start = System.currentTimeMillis();
 		
 		m_destBitmap.eraseColor(0);
 		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.m_currTrans, m_wrapMode);
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
 		m_paramHolder.applyScreenCoords(m_poleDrawer.setCanvas(canvas));
 		
-//		++count;
-//		if ((time = System.currentTimeMillis()-start) < 3000) {
-//			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
-//		} else {
-//			count = 0;
-//		}
+		++count;
+		if ((time = System.currentTimeMillis()-start) < 3000) {
+			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
+		} else {
+			count = 0;
+		}
 	}
 	@Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {

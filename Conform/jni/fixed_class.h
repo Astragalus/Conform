@@ -174,6 +174,13 @@ inline fixed_point<p> clamp(const fixed_point<p> a)
 }
 
 template <int p>
+inline fixed_point<p> wrapOrClamp(const fixed_point<p> a, const int wrapMode) {
+	fixed_point<p> r;
+	r.intValue = ((wrapMode-1)&(a.intValue & ((1<<p)-1))) | ((-wrapMode) & (a.intValue & -(a.intValue > 0) & -(a.intValue <= (1<<p))) | ((a.intValue > (1<<p) << p)));
+	return r;
+}
+
+template <int p>
 inline fixed_point<p> fixinterp(fixed_point<p> a, fixed_point<p> b, fixed_point<p> t) {
 	fixed_point<p> r;
 	r.intValue = fixinterp(a.intValue, b.intValue, t);

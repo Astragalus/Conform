@@ -48,14 +48,14 @@ const char *bitmapFormatToString(const int fmt) {
 }
 
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jint numParams, jfloat pivotX, jfloat pivotY,
+			jfloat scaleFac, jint wrapMode, jfloat p1r, jfloat p1i, jfloat p2r, jfloat p2i, jfloat p3r, jfloat p3i, jfloat p4r, jfloat p4i, jfloat p5r, jfloat p5i, jfloat p6r, jfloat p6i);
 }
 
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jint numParams, jfloat pivotX, jfloat pivotY,
+			jfloat scaleFac, jint wrapMode, jfloat p1r, jfloat p1i, jfloat p2r, jfloat p2i, jfloat p3r, jfloat p3i, jfloat p4r, jfloat p4i, jfloat p5r, jfloat p5i, jfloat p6r, jfloat p6i) {
 	int status = 0;
-
-	jfloat *params = env->GetFloatArrayElements(paramArray,0);
-
+	const float params[12] = {p1r, p1i, p2r, p2i, p3r, p3i, p4r, p4i, p5r, p5i, p6r, p6i};
 	AndroidBitmapInfo sourceInfo;
 	status = AndroidBitmap_getInfo(env, bmSource, &sourceInfo);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
@@ -87,7 +87,9 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		return status;
 	}
 
-	const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
+	static const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
+	static const MobiusTrans viewinv(-view);
+
 	const MobiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
 
 	BlaschkeMap blas;
@@ -96,14 +98,11 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		blas *= MobiusTrans::hyperbolicIsometry(param);
 	}
 
-	const BlaschkeMap map((-view)|blas|(view|-zoom));
+	const BlaschkeMap map(viewinv|blas|view|-zoom);
 
-	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
-	if (wrapMode == 0) {
-		to.pullbackSampledBitmap(map, createSampler(sourcePtr, sourceInfo.width, sourceInfo.height, Tile()));
-	} else {
-		to.pullbackSampledBitmap(map, createSampler(sourcePtr, sourceInfo.width, sourceInfo.height, Clamp()));
-	}
+	MappedBitmap viewPlane(destPtr, destInfo.width, destInfo.height);
+	const BitmapSampler sampler(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
+	viewPlane.pullbackSampledBitmap(map, sampler);
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
@@ -116,7 +115,5 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		return status;
 	}
 	
-	env->ReleaseFloatArrayElements(paramArray, params, 0);
-
 	return status;
 }

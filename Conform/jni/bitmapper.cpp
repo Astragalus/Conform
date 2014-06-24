@@ -50,11 +50,44 @@ ostream &operator<<(ostream &os, const fixed_point<16> &f) {
 	return os << setw(5) << f.toFloat();
 }
 
+//BitmapSampler----------------------------------------
+
+BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int wrapMode) :
+	m_srcPixels(srcPixels), m_srcWidth(srcWidth), m_srcHeight(srcHeight),
+	m_xMult(srcWidth<srcHeight?fixpoint(srcHeight)/fixpoint(srcWidth):fixpoint(1)),
+	m_yMult(srcWidth>srcHeight?fixpoint(srcWidth)/fixpoint(srcHeight):fixpoint(1)),
+	m_wrapMode(wrapMode) {
+}
+
+const Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
+	const fixpoint xfix = wrapOrClamp(w.real()*m_xMult, m_wrapMode)*fixpoint(m_srcWidth-1);
+	const fixpoint yfix = wrapOrClamp(w.imag()*m_yMult, m_wrapMode)*fixpoint(m_srcHeight-1);
+	const fixpoint tx = frac(xfix);
+	const fixpoint ty = frac(yfix);
+	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side
+	const uint32_t y0 = (yfix-ty).toUnsigned(); //y index of bottom (top?) side
+	return Pixel::bilinterp(Pixel(m_srcPixels[y0*m_srcWidth+x0]),Pixel(m_srcPixels[y0*m_srcWidth+x0+1]),
+							Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0]),Pixel(m_srcPixels[(y0+1)*m_srcWidth+(x0+1)]),
+							tx, ty);
+}
 //MappedBitmap----------------------------------------
 
 MappedBitmap::MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight) :
 	m_destPixels(destPixels), m_destWidth(destWidth), m_destHeight(destHeight),
 	m_reInc(fixpoint(1)/fixpoint(m_destWidth-1)), m_imInc(fixpoint(1)/fixpoint(m_destHeight-1)) {
+}
+
+void MappedBitmap::pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSampler& src) {
+	fixpoint zim(0);
+	for (int v = 0; v < m_destHeight; ++v) {
+		fixpoint zre(0);
+		for (int u = 0; u < m_destWidth; ++u) {
+			const complex<fixpoint> z(zre,zim);
+			src.bilinearSample(map(z)).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
+			zre += m_reInc;
+		}
+		zim += m_imInc;
+	}
 }
 
 //MoebiusTrans----------------------------------------
@@ -72,6 +105,7 @@ MobiusTrans& MobiusTrans::operator=(const MobiusTrans& mt) {
 	m_c=mt.m_c;
 	m_d=mt.m_d;
 	m_isIdentity=mt.m_isIdentity;
+	return *this;
 }
 
 const MobiusTrans MobiusTrans::hyperbolicIsometry(const complex<fixpoint>& zero) {

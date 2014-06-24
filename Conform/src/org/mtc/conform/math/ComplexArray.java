@@ -6,7 +6,7 @@ public class ComplexArray implements Iterable<IComplex> {
 
 	final public float[] arr;
 	final public int capacity;
-	private int size;
+	public int size;
 	
 	public ComplexArray(final int capacity) {
 		this.capacity = capacity;
