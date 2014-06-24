@@ -1,12 +1,9 @@
 package org.mtc.conform;
 
-import java.util.Arrays;
-
 import org.mtc.conform.math.ComplexAffineTrans;
 import org.mtc.conform.math.ComplexArray;
 
 import android.graphics.Bitmap;
-import android.util.Log;
 
 public class ConformLib {
 
@@ -25,7 +22,6 @@ public class ConformLib {
 	}
 	
 	public int pullback(Bitmap sourceBitmap, Bitmap viewBitmap, ComplexArray params, ComplexAffineTrans currTrans, WrapMode wrapMode) {
-		Log.d("Conform","pullbackBitmaps(params[" + Arrays.toString(params.arr) + "], numParams[" + params.size() + "], currTrans[" + currTrans + "], wrapMode[" + wrapMode + "]");
 		return pullbackBitmaps(sourceBitmap, viewBitmap, params.arr, params.size(), currTrans.tr.re, currTrans.tr.im, currTrans.sc.re, wrapMode.getInt());
 	}
 	

@@ -90,33 +90,14 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
 	const MobiusTrans zoom(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
 
-	DEBUG << "[conform.cpp] ";
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {
 		const complex<fixpoint> param(view(complex<fixpoint>(params[2*i],params[2*i+1])));
-		DEBUG << "param" << (i+1) << "[" << param << "] ";
 		blas *= MobiusTrans::hyperbolicIsometry(param);
-		DEBUG << "blas[" << blas << "] ";
 	}
-	DEBUG << endl;
-	DEBUG << "[conform.cpp] blaschke[" << blas << "]" << endl;
 
 	const BlaschkeMap map((-view)|blas|(view|-zoom));
-	DEBUG << "[full blaschke product]" << map << endl;
-	const complex<fixpoint> I(0.0, 1.0);
 
-	DEBUG << "breakdown: " << endl;
-	complex<fixpoint> z(1.0, 0.0);
-	for (int i = 0; i < 4; ++i) {
-		const complex<fixpoint> zz = (-zoom)(z);
-		const complex<fixpoint> vzz = (view)(zz);
-		const complex<fixpoint> bvzz = (blas)(vzz);
-		const complex<fixpoint> vbvzz = (-view)(bvzz);
-
-		DEBUG << "a) " <<  z << "|->" << map(z) << endl;
-		DEBUG << "b) " <<  z << "|->" << zz << "->" << vzz << "->" <<  bvzz << "->" << vbvzz << endl;
-		z *= I;
-	}
 	MappedBitmap to(destPtr, destInfo.width, destInfo.height);
 	if (wrapMode == 0) {
 		to.pullbackSampledBitmap(map, createSampler(sourcePtr, sourceInfo.width, sourceInfo.height, Tile()));

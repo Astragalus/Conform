@@ -268,6 +268,12 @@ public class ComplexArray implements Iterable<IComplex> {
 		}
 	}
 
+	public void remove() {
+		if (size > 0) {
+			--size;
+		}
+	}
+	
 	private static IComplexActor getStringifier(final StringBuilder sb) {
 		return new IComplexActor() {
 			boolean isFirst = true;

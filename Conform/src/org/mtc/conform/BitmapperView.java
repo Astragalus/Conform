@@ -75,6 +75,12 @@ public class BitmapperView extends ImageView {
 			updateScreenCoords();
 		}
 
+		public void removeParam() {
+			m_normCoords.remove();
+			m_screenCoords.remove();
+			invalidate();
+		}
+		
 		public void applyScreenCoords(final IComplexActor action) {
 			m_screenCoords.apply(action);
 		}
@@ -82,18 +88,12 @@ public class BitmapperView extends ImageView {
 		public ComplexElement findParamNearCoords(float scrX, float scrY) {
 			ComplexElement result = null;
 			final Complex at = new Complex(scrX, scrY);
-			final StringBuilder logSb = new StringBuilder("Finding param near [").append(at).append(']');
 			for (IComplex param : m_screenCoords) {
-				final float distSq = param.distSq(at);
-				logSb.append(" - [").append(param).append("] is at distSq ").append(distSq);
 				if (param.distSq(at) <= RADIUS*RADIUS) {
-					logSb.append(" <= ").append(RADIUS*RADIUS);
 					result = (ComplexElement) param;
-					logSb.append(" - found param ").append(result);
 					break;
 				} 
 			}
-			Log.d(TAG, logSb.toString());
 			return result;
 		}
 		
@@ -102,10 +102,9 @@ public class BitmapperView extends ImageView {
 		}
 		
 		public void setParamScreenCoords(final ComplexElement scrParam, float scrX, float scrY) {
-			final ComplexElement normParam = m_normCoords.atIndexOf(scrParam.re(scrX).im(scrY));
+			scrParam.re(scrX).im(scrY);
 			m_trans.screenToNormalizedPoints(m_screenCoords, m_normCoords);
 			invalidate();
-			Log.d(TAG, "Set screen coords:" + scrParam + " --> norm coords: " + normParam);
 		}
 		
 		private void updateScreenCoords() {
@@ -118,7 +117,6 @@ public class BitmapperView extends ImageView {
 		 */
 		@Override
 		public void update(Observable observable, Object data) {
-			Log.d(TAG, "received update, transforming normalized to screen coords");
 			updateScreenCoords();
 		}
 		
@@ -180,11 +178,9 @@ public class BitmapperView extends ImageView {
 			setChanged();
 			notifyObservers();
 			setChanged();
-			Log.d(TAG,"updateMatrices: square->screen[" + m_squareToScreenMat.toShortString() + "], screen->square[" + m_screenToSquareMat.toShortString() + "]");
 		}
 		public void scale(final float s, final float x, final float y) {
 			m_currTrans.postMult(ComplexAffineTrans.scaling(s, normalizeDiffVec(m_pivot.re(x).im(y))));
-			Log.d(TAG,"scale: s[" + s + "], pivot[" + m_pivot + "]");
 			notifyObservers();
 			setChanged();
 		}
@@ -242,7 +238,6 @@ public class BitmapperView extends ImageView {
 					final ComplexElement param = m_paramHolder.findParamNearCoords(event.getX(i), event.getY(i));
 					if (param != null) {
 						m_ptrIdToParam.put(event.getPointerId(i), param);
-						Log.d(TAG,"MotionEvent.ACTION_DOWN: pointerId[" + event.getPointerId(i) + "] getX[" + event.getX(i) + "], getY[" + event.getY(i) + "] param[" + param + "]");
 						return true;
 					}
 				}
@@ -252,7 +247,6 @@ public class BitmapperView extends ImageView {
 					final ComplexElement param = m_ptrIdToParam.get(event.getPointerId(i));
 					if (param != null) {
 						m_paramHolder.setParamScreenCoords(param, event.getX(i), event.getY(i));
-						Log.d(TAG,"MotionEvent.ACTION_MOVE: pointerId[" + event.getPointerId(i) + "] getX[" + event.getX(i) + "], getY[" + event.getY(i) + "] param[" + param + "]");
 						return true;
 					}
 				}
@@ -312,10 +306,10 @@ public class BitmapperView extends ImageView {
 	private final ParamDrawer m_poleDrawer;
 	private final ParamHolder m_paramHolder;
 
-	long start;
-	long time;
-	int count;
-	float fps;
+//	long start;
+//	long time;
+//	int count;
+//	float fps;
 	
 	public static final int RADIUS = 10;
 	
@@ -337,23 +331,20 @@ public class BitmapperView extends ImageView {
 	
 	@Override
 	protected void onDraw(final Canvas canvas) {	
-		if (count == 0)
-			start = System.currentTimeMillis();
-		
-		Log.d(TAG, m_paramHolder.toString());
+//		if (count == 0)
+//			start = System.currentTimeMillis();
 		
 		m_destBitmap.eraseColor(0);
 		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.m_currTrans, m_wrapMode);
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
-		
 		m_paramHolder.applyScreenCoords(m_poleDrawer.setCanvas(canvas));
 		
-		++count;
-		if ((time = System.currentTimeMillis()-start) < 3000) {
-			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
-		} else {
-			count = 0;
-		}
+//		++count;
+//		if ((time = System.currentTimeMillis()-start) < 3000) {
+//			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
+//		} else {
+//			count = 0;
+//		}
 	}
 	@Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -369,12 +360,11 @@ public class BitmapperView extends ImageView {
 	}
 	
 	public void removeParam() {
-		
+		m_paramHolder.removeParam();
 	}
 	
 	public void setSourceBitmap(final Bitmap sourceBitmap) {
 		m_srcBitmap = sourceBitmap;
-		Log.d(TAG, "setSourceBitmap: sourceBitmap[" + sourceBitmap.describeContents() + "]");
 		invalidate();
 	}
 	
@@ -392,7 +382,6 @@ public class BitmapperView extends ImageView {
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		Log.d(TAG, "onTouchEvent: event[" + event + "]");
 		if (m_touchHandler.onTouchEvent(event)) {
 			invalidate();
 			return true;
