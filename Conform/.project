@@ -46,4 +46,31 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>include-gabi++</name>
+			<type>2</type>
+			<location>C:/dev/android-ndk-r9d/sources/cxx-stl/gabi++/include</location>
+		</link>
+		<link>
+			<name>include-gcc</name>
+			<type>2</type>
+			<location>C:/dev/android-ndk-r9d/toolchains/arm-linux-androideabi-4.8/prebuilt/windows-x86_64/lib/gcc/arm-linux-androideabi/4.8/include</location>
+		</link>
+		<link>
+			<name>include-gcc-fixed</name>
+			<type>2</type>
+			<location>C:/dev/android-ndk-r9d/toolchains/arm-linux-androideabi-4.8/prebuilt/windows-x86_64/lib/gcc/arm-linux-androideabi/4.8/include-fixed</location>
+		</link>
+		<link>
+			<name>include-platforms</name>
+			<type>2</type>
+			<location>C:/dev/android-ndk-r9d/platforms/android-19/arch-arm/usr/include</location>
+		</link>
+		<link>
+			<name>include-stlport</name>
+			<type>2</type>
+			<location>C:/dev/android-ndk-r9d/sources/cxx-stl/stlport/stlport</location>
+		</link>
+	</linkedResources>
 </projectDescription>
