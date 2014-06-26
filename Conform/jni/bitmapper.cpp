@@ -60,8 +60,8 @@ BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth,
 }
 
 const Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
-	const fixpoint xfix = wrapOrClamp(w.real()*m_xMult, m_wrapMode)*fixpoint(m_srcWidth-1);
-	const fixpoint yfix = wrapOrClamp(w.imag()*m_yMult, m_wrapMode)*fixpoint(m_srcHeight-1);
+	const fixpoint xfix = wrapOrClamp((w.real()+fixpoint(1))/(fixpoint(2))*m_xMult, m_wrapMode)*fixpoint(m_srcWidth-1);
+	const fixpoint yfix = wrapOrClamp((w.imag()+fixpoint(1))/(fixpoint(2))*m_yMult, m_wrapMode)*fixpoint(m_srcHeight-1);
 	const fixpoint tx = frac(xfix);
 	const fixpoint ty = frac(yfix);
 	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side
@@ -74,13 +74,13 @@ const Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
 
 MappedBitmap::MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight) :
 	m_destPixels(destPixels), m_destWidth(destWidth), m_destHeight(destHeight),
-	m_reInc(fixpoint(1)/fixpoint(m_destWidth-1)), m_imInc(fixpoint(1)/fixpoint(m_destHeight-1)) {
+	m_reInc(fixpoint(2)/fixpoint(m_destWidth-1)), m_imInc(fixpoint(2)/fixpoint(m_destHeight-1)) {
 }
 
 void MappedBitmap::pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSampler& src) {
-	fixpoint zim(0);
+	fixpoint zim(-1);
 	for (int v = 0; v < m_destHeight; ++v) {
-		fixpoint zre(0);
+		fixpoint zre(-1);
 		for (int u = 0; u < m_destWidth; ++u) {
 			const complex<fixpoint> z(zre,zim);
 			src.bilinearSample(map(z)).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
@@ -118,6 +118,13 @@ const complex<fixpoint> MobiusTrans::operator()(const complex<fixpoint> &z) cons
 const MobiusTrans MobiusTrans::operator|(const MobiusTrans& f) const {
 	return MobiusTrans(m_a*f.m_a + m_b*f.m_c, m_a*f.m_b + m_b*f.m_d, m_c*f.m_a + m_d*f.m_c, m_c*f.m_b + m_d*f.m_d);
 }
+MobiusTrans& MobiusTrans::operator|=(const MobiusTrans& f) {
+	m_a = m_a*f.m_a + m_b*f.m_c;
+	m_b = m_a*f.m_b + m_b*f.m_d;
+	m_c = m_c*f.m_a + m_d*f.m_c;
+	m_d = m_c*f.m_b + m_d*f.m_d;
+	return *this;
+}
 const MobiusTrans MobiusTrans::operator-() const {
 	const complex<fixpoint> det(m_a*m_d-m_b*m_c);
 	if (!isZero(det)) {
@@ -146,24 +153,25 @@ BlaschkeMap::BlaschkeMap(const MobiusTrans& a) : m_factors({a}), m_numFactors(1)
 BlaschkeMap::BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b) : m_factors({a,b}), m_numFactors(2) {
 }
 
-BlaschkeMap::BlaschkeMap(const BlaschkeMap& g) : m_numFactors(g.m_numFactors), m_lhs(g.m_lhs), m_rhs(g.m_rhs) {
+BlaschkeMap::BlaschkeMap(const BlaschkeMap& g) : m_numFactors(g.m_numFactors), m_lhs(g.m_lhs) {
 	copy(&g.m_factors[0], &g.m_factors[0] + g.m_numFactors, &m_factors[0]);
 }
 
 const complex<fixpoint> BlaschkeMap::operator()(const complex<fixpoint> &z) const {
-	const complex<fixpoint> zz = m_rhs(z);
 	complex<fixpoint> w(ONE);
 	for (int i = 0; i < m_numFactors; ++i) {
-		w *= m_factors[i](zz);
+		w *= m_factors[i](z);
 	}
-	return m_lhs(w);
+	return m_lhs.isIdentity() ? w : m_lhs(w);
 }
 BlaschkeMap& operator|(const MobiusTrans& a, BlaschkeMap& b) {
 	b.m_lhs = (a|b.m_lhs);
 	return b;
 }
 BlaschkeMap& operator|(BlaschkeMap& b, const MobiusTrans& a) {
-	b.m_rhs = (b.m_rhs|a);
+	for (int i = 0; i < b.m_numFactors; ++i) {
+		b.m_factors[i] |= a;
+	}
 	return b;
 }
 
@@ -190,6 +198,5 @@ ostream& operator<<(ostream &os, const BlaschkeMap& blasch) {
 			os << '*' << blasch.m_factors[i];
 		}
 	}
-	os << 'o' << blasch.m_rhs;
 	return os;
 }

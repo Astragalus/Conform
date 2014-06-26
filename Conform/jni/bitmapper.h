@@ -69,6 +69,7 @@ public:
 	static const MobiusTrans hyperbolicIsometry(const complex<fixpoint>& zero);
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
 	const MobiusTrans operator|(const MobiusTrans& f) const;
+	MobiusTrans& operator|=(const MobiusTrans& f);
 	const MobiusTrans operator-() const;
 	friend ostream& operator<<(ostream &os, const MobiusTrans& mobius);
 	static const MobiusTrans identity;
@@ -98,7 +99,6 @@ private:
 	int m_numFactors;
 	MobiusTrans m_factors[max_factors];
 	MobiusTrans m_lhs;
-	MobiusTrans m_rhs;
 };
 
 class MappedBitmap {
