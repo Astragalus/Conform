@@ -59,7 +59,7 @@ public class BitmapperView extends ImageView {
 			m_normCoords = new ComplexArray(MAX_PARAMS);
 			m_trans = transStateHolder;
 			m_trans.addObserver(this);
-			addParamNormCoords(0.5f, 0.5f);
+			addParamNormCoords(0.0f, 0.0f);
 		}
 		
 		public void addParamScreenCoords(float scrX, float scrY) {
@@ -150,7 +150,7 @@ public class BitmapperView extends ImageView {
 		final private Matrix m_screenToSquareMat = new Matrix();
 		final private Matrix m_squareToScreenMat = new Matrix();
 		final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
-		final private ComplexElement m_pivot = new ComplexArray(1,1).front().assignFrom(IComplex.ONE);
+		final private ComplexElement m_pivot = new ComplexArray(1,1).front().assignFrom(IComplex.ZERO);
 		final private ComplexElement m_translate = new ComplexArray(1,1).front().assignFrom(IComplex.ZERO);
 		final private IComplexActor m_fwdTransformer = new IComplexActor() {
 			@Override
@@ -172,8 +172,10 @@ public class BitmapperView extends ImageView {
 		public void updateMatrices() {
 			m_squareToScreenMat.set(getImageMatrix());
 			m_squareToScreenMat.preScale(m_drawWidth, m_drawHeight);
+			m_squareToScreenMat.preScale(0.5f, 0.5f, 1.0f, 1.0f);			
 			getImageMatrix().invert(m_screenToSquareMat);
 			m_screenToSquareMat.postScale(1.0f/m_drawWidth, 1.0f/m_drawHeight);
+			m_screenToSquareMat.postScale(2.0f, 2.0f, 1.0f, 1.0f);
 			setChanged();
 			notifyObservers();
 			setChanged();
@@ -334,20 +336,20 @@ public class BitmapperView extends ImageView {
 	
 	@Override
 	protected void onDraw(final Canvas canvas) {	
-		if (count == 0)
-			start = System.currentTimeMillis();
-		
-		m_destBitmap.eraseColor(0);
-		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.m_currTrans, m_wrapMode);
-		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
-		m_paramHolder.applyScreenCoords(m_poleDrawer.setCanvas(canvas));
-		
-		++count;
-		if ((time = System.currentTimeMillis()-start) < 3000) {
-			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
-		} else {
-			count = 0;
+//		if (count == 0)
+//			start = System.currentTimeMillis();
+		if (m_transState.hasChanged()) {
+			m_destBitmap.eraseColor(0);
+			ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.m_currTrans, m_wrapMode);
+			canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
+			m_paramHolder.applyScreenCoords(m_poleDrawer.setCanvas(canvas));
 		}
+//		++count;
+//		if ((time = System.currentTimeMillis()-start) < 3000) {
+//			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
+//		} else {
+//			count = 0;
+//		}
 	}
 	@Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -359,7 +361,7 @@ public class BitmapperView extends ImageView {
 	}
 	
 	public void addParam() {
-		m_paramHolder.addParamNormCoords(0.5f, 0.5f);
+		m_paramHolder.addParamNormCoords(0.0f, 0.0f);
 	}
 	
 	public void removeParam() {
@@ -380,6 +382,7 @@ public class BitmapperView extends ImageView {
 	public void setTouchMode(final TouchMode touchMode) {
 		m_touchMode = touchMode;
 		Log.d(TAG, "Touch mode set to: " + touchMode.name());
+		Log.d(TAG, "[Javaland] params[" + m_paramHolder.m_normCoords + "] currTrans[" + m_transState.m_currTrans + "]");
 		invalidate();
 	}
 	

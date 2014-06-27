@@ -87,19 +87,17 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		return status;
 	}
 
-	static const MobiusTrans view(complex<fixpoint>(2,0), complex<fixpoint>(-1,-1), complex<fixpoint>(0,0), complex<fixpoint>(1,0));
-	static const MobiusTrans viewinv(-view);
-
 	const MobiusTrans affine(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
-	const MobiusTrans model(view|(-affine)|viewinv);
 
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {
-		const complex<fixpoint> param(view(complex<fixpoint>(params[2*i],params[2*i+1])));
+		const complex<fixpoint> param(complex<fixpoint>(params[2*i],params[2*i+1]));
 		blas *= MobiusTrans::hyperbolicIsometry(param);
 	}
 
-	const BlaschkeMap map(blas|model);
+	const BlaschkeMap map(blas|-affine);
+
+	DEBUG << "[C++land] blas[" << blas << "] affine[" << affine << "]" << endl;
 
 	MappedBitmap viewPlane(destPtr, destInfo.width, destInfo.height);
 	const BitmapSampler sampler(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
