@@ -139,7 +139,7 @@ public class ComplexArray implements Iterable<IComplex> {
 		public ComplexElement mult(final Complex z) {
 			final float re = arr[idx];
 			final float im = arr[idx+1];		
-			arr[idx] = re*z.re + im*z.im;
+			arr[idx] = re*z.re - im*z.im;
 			arr[idx+1] = re*z.im + im*z.re;
 			return this;
 		}

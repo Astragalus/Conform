@@ -58,7 +58,7 @@ public class Complex implements IComplex {
 	}
 	@Override
 	public Complex mult(final Complex z) {
-		final float newre = re*z.re + im*z.im;
+		final float newre = re*z.re - im*z.im;
 		final float newim = re*z.im + im*z.re;
 		re = newre;
 		im = newim;
