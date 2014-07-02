@@ -114,10 +114,15 @@ public class Complex implements IComplex {
 	
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append('(').append(re).append("+i").append(im).append(')');
-		return sb.toString();
+		return toString(this);
 	}
+
+	public static String toString(IComplex z) {
+		final float re = z.re();
+		final float im = z.im();
+		return String.format("[%.4f%c%.4fi]", re, (im<0f ? '-' : '+'), im<0f ? -im : im);
+	}
+	
 	@Override
 	public boolean equals(Object o) {
 		return re == ((Complex)o).re && im == ((Complex)o).im; 

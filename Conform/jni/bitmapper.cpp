@@ -135,7 +135,7 @@ const MobiusTrans MobiusTrans::operator-() const {
 }
 
 ostream& operator<<(ostream &os, const MobiusTrans& mobius) {
-	return os << "(" << mobius.m_a << "z+" << mobius.m_b << ")/(" << mobius.m_c << "z+" << mobius.m_d << ")";
+	return os << fixed << setprecision(4) << '[' << mobius.m_a << "z+" << mobius.m_b << "]/[" << mobius.m_c << "z+" << mobius.m_d << ')';
 }
 
 const MobiusTrans MobiusTrans::identity = MobiusTrans();

@@ -88,7 +88,7 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	}
 
 	const MobiusTrans affine(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
-
+	DEBUG << "affine in cpp: " << affine << endl;
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {
 		const complex<fixpoint> param(complex<fixpoint>(params[2*i],params[2*i+1]));
@@ -96,8 +96,6 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	}
 
 	const BlaschkeMap map(blas|-affine);
-
-	DEBUG << "[C++land] blas[" << blas << "] affine[" << affine << "]" << endl;
 
 	MappedBitmap viewPlane(destPtr, destInfo.width, destInfo.height);
 	const BitmapSampler sampler(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
