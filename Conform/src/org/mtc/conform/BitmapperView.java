@@ -132,13 +132,11 @@ public class BitmapperView extends ImageView {
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
-			sb.append("Params").append('(').append(size()).append(')');
-			sb.append("Normal[");
+			sb.append("norm[");
 			for (IComplex norm : m_normCoords) {
 				sb.append(norm.toString()).append(' ');
 			}
 			sb.append(']');
-			
 			sb.append("Screen[");
 			for (IComplex scr : m_screenCoords) {
 				sb.append(scr.toString()).append(' ');
@@ -204,6 +202,7 @@ public class BitmapperView extends ImageView {
 		public ComplexElement screenToNormalizedPoint(ComplexElement srcdst) {
 			final ComplexArray backingArray = srcdst.getParent();
 			m_screenToSquareMat.mapPoints(backingArray.arr, 0, backingArray.arr, 0, 1);
+			m_invTransformer.actOn(srcdst);
 			return srcdst;
 		}
 		public void screenToNormalizedPoints(final ComplexArray src, final ComplexArray dst) {			
@@ -282,6 +281,9 @@ public class BitmapperView extends ImageView {
 		}
 		@Override
 		public boolean onScale(ScaleGestureDetector detector) {
+			final float s = detector.getScaleFactor();
+			final float x = detector.getFocusX();
+			final float y = detector.getFocusY();
 			m_state.scale(detector.getScaleFactor(), detector.getFocusX(), detector.getFocusY());
 			return true;
 		}
@@ -402,9 +404,6 @@ public class BitmapperView extends ImageView {
 	public void setTouchMode(final TouchMode touchMode) {
 		m_touchMode = touchMode;
 		Log.i(TAG, "touch mode  [" + touchMode.name() + "]");
-		Log.i(TAG, "normParams  [" + m_paramHolder.m_normCoords + "]");
-		Log.i(TAG, "screenParams[" + m_paramHolder.m_screenCoords + "]");
-		Log.i(TAG, "currTrans   [" + m_transState.m_currTrans + "]");		
 		invalidate();
 	}
 	

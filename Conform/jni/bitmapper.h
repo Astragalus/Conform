@@ -69,7 +69,6 @@ public:
 	static const MobiusTrans hyperbolicIsometry(const complex<fixpoint>& zero);
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
 	const MobiusTrans operator|(const MobiusTrans& f) const;
-	MobiusTrans& operator|=(const MobiusTrans& f);
 	const MobiusTrans operator-() const;
 	friend ostream& operator<<(ostream &os, const MobiusTrans& mobius);
 	static const MobiusTrans identity;

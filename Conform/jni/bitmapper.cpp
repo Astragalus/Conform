@@ -118,13 +118,6 @@ const complex<fixpoint> MobiusTrans::operator()(const complex<fixpoint> &z) cons
 const MobiusTrans MobiusTrans::operator|(const MobiusTrans& f) const {
 	return MobiusTrans(m_a*f.m_a + m_b*f.m_c, m_a*f.m_b + m_b*f.m_d, m_c*f.m_a + m_d*f.m_c, m_c*f.m_b + m_d*f.m_d);
 }
-MobiusTrans& MobiusTrans::operator|=(const MobiusTrans& f) {
-	m_a = m_a*f.m_a + m_b*f.m_c;
-	m_b = m_a*f.m_b + m_b*f.m_d;
-	m_c = m_c*f.m_a + m_d*f.m_c;
-	m_d = m_c*f.m_b + m_d*f.m_d;
-	return *this;
-}
 const MobiusTrans MobiusTrans::operator-() const {
 	const complex<fixpoint> det(m_a*m_d-m_b*m_c);
 	if (!isZero(det)) {
@@ -135,7 +128,8 @@ const MobiusTrans MobiusTrans::operator-() const {
 }
 
 ostream& operator<<(ostream &os, const MobiusTrans& mobius) {
-	return os << fixed << setprecision(4) << '[' << mobius.m_a << "z+" << mobius.m_b << "]/[" << mobius.m_c << "z+" << mobius.m_d << ')';
+	//return os << fixed << setprecision(4) << '[' << mobius.m_a << "z+" << mobius.m_b << "]/[" << mobius.m_c << "z+" << mobius.m_d << ')';
+	return os << fixed << setprecision(4) << '[' << mobius.m_a << "z+" << mobius.m_b << "]";
 }
 
 const MobiusTrans MobiusTrans::identity = MobiusTrans();
@@ -170,7 +164,7 @@ BlaschkeMap& operator|(const MobiusTrans& a, BlaschkeMap& b) {
 }
 BlaschkeMap& operator|(BlaschkeMap& b, const MobiusTrans& a) {
 	for (int i = 0; i < b.m_numFactors; ++i) {
-		b.m_factors[i] |= a;
+		b.m_factors[i] = (b.m_factors[i]|a);
 	}
 	return b;
 }

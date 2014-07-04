@@ -35,7 +35,7 @@ public class ComplexAffineTrans {
 		return new ComplexAffineTrans(new Complex(s), new Complex(p).mult(1.0f-s));
 	}
 	public static ComplexAffineTrans scaling(final float s, final float x, final float y) {
-		return new ComplexAffineTrans(new Complex(s), new Complex(x,y).mult(s-1.0f));
+		return new ComplexAffineTrans(new Complex(s), new Complex(x,y).mult(1.0f-s));
 	}
 	
 	public ComplexAffineTrans preMult(final ComplexAffineTrans t) {
