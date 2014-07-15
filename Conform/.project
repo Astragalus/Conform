@@ -48,11 +48,6 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>include-gabi++</name>
-			<type>2</type>
-			<location>C:/dev/android-ndk-r9d/sources/cxx-stl/gabi++/include</location>
-		</link>
-		<link>
 			<name>include-gcc</name>
 			<type>2</type>
 			<location>C:/dev/android-ndk-r9d/toolchains/arm-linux-androideabi-4.8/prebuilt/windows-x86_64/lib/gcc/arm-linux-androideabi/4.8/include</location>
@@ -61,6 +56,16 @@
 			<name>include-gcc-fixed</name>
 			<type>2</type>
 			<location>C:/dev/android-ndk-r9d/toolchains/arm-linux-androideabi-4.8/prebuilt/windows-x86_64/lib/gcc/arm-linux-androideabi/4.8/include-fixed</location>
+		</link>
+		<link>
+			<name>include-gnustl</name>
+			<type>2</type>
+			<location>C:/dev/android-ndk-r9d/sources/cxx-stl/gnu-libstdc++/4.8/include</location>
+		</link>
+		<link>
+			<name>include-gnustl-armeabi-v7a</name>
+			<type>2</type>
+			<location>C:/dev/android-ndk-r9d/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include</location>
 		</link>
 		<link>
 			<name>include-platforms</name>

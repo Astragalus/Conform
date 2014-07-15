@@ -19,13 +19,7 @@ typedef fixed_point<16> fixpoint;
 static const complex<fixpoint> ONE(1,0);
 static const complex<fixpoint> ZERO(0,0);
 
-static inline bool isZero(const complex<fixpoint> &z) {
-	return (!z.real() && !z.imag());
-}
-
-static inline const complex<fixpoint> oneIfZero(const complex<fixpoint> &a) {
-	return complex<fixpoint>(a.real()|(!a.real() && !a.imag()), a.imag());
-}
+const complex<fixpoint> divZeroGuard(complex<fixpoint>&& z);
 
 class Pixel {
 public:
@@ -66,7 +60,7 @@ public:
 	explicit MobiusTrans();
 	MobiusTrans(const MobiusTrans& mt);
 	MobiusTrans& operator=(const MobiusTrans& mt);
-	static const MobiusTrans hyperbolicIsometry(const complex<fixpoint>& zero);
+	static const MobiusTrans hyperbolicIsometry(complex<fixpoint>&& zero);
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
 	const MobiusTrans operator|(const MobiusTrans& f) const;
 	const MobiusTrans operator-() const;

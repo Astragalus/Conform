@@ -104,6 +104,10 @@ public class BitmapperView extends ImageView {
 		}
 		
 		public int size() {
+			final int[] ints = new int[] {1,2};
+			for (int i : ints) {
+				++i;
+			}
 			return m_normCoords.size();
 		}
 		
@@ -281,9 +285,6 @@ public class BitmapperView extends ImageView {
 		}
 		@Override
 		public boolean onScale(ScaleGestureDetector detector) {
-			final float s = detector.getScaleFactor();
-			final float x = detector.getFocusX();
-			final float y = detector.getFocusY();
 			m_state.scale(detector.getScaleFactor(), detector.getFocusX(), detector.getFocusY());
 			return true;
 		}
@@ -333,10 +334,10 @@ public class BitmapperView extends ImageView {
 	private final ParamDrawer m_poleDrawer;
 	private final ParamHolder m_paramHolder;
 
-	long start;
-	long time;
-	int count;
-	float fps;
+//	long start;
+//	long time;
+//	int count;
+//	float fps;
 	
 	public static final int RADIUS = 10;
 	

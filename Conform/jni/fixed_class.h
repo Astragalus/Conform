@@ -40,6 +40,7 @@ Modified by Matthew Cushman in 2014
 
 #define FRAC_MASK(p) ((1<<(p))-1)
 #define INT_MASK(p) ((-1)^FRAC_MASK(p))
+#define EPSILON (1<<4) //divided by 1<<p
 
 // The template argument p in all of the following functions refers to the 
 // fixed point precision (e.g. p = 8 gives 24.8 fixed point functions).
@@ -49,10 +50,10 @@ struct fixed_point {
 	int32_t intValue;
 	
 	fixed_point() : intValue(0) {}
+	fixed_point(const fixed_point& f) : intValue(f.intValue) {}
 	/*explicit*/ fixed_point(int32_t i) : intValue(i << p) {}
 	/*explicit*/ fixed_point(uint32_t i) : intValue(i << p) {}
-	/*explicit*/ fixed_point(float f) : intValue(float2fix<p>(f)) {}
-	/*explicit*/ fixed_point(double f) : intValue(float2fix<p>((float)f)) {}
+	explicit fixed_point(float f) : intValue(float2fix<p>(f)) {}
 	
 	fixed_point& operator += (fixed_point r) { intValue += r.intValue; return *this; }
 	fixed_point& operator -= (fixed_point r) { intValue -= r.intValue; return *this; }
@@ -60,9 +61,9 @@ struct fixed_point {
 	fixed_point& operator /= (fixed_point r) { intValue = fixdiv<p>(intValue, r.intValue); return *this; }
 	fixed_point& operator |= (int32_t r) { intValue |= r; return *this; }
 	fixed_point& operator &= (int32_t r) { intValue &= r; return *this; }
-
 	fixed_point& operator *= (int32_t r) { intValue *= r; return *this; }
 	fixed_point& operator /= (int32_t r) { intValue /= r; return *this; }
+	fixed_point& operator >>= (int32_t r) { intValue >>= r; return *this; }
 	
 	fixed_point operator - () const { fixed_point x; x.intValue = -intValue; return x; }
 	fixed_point operator + (fixed_point r) const { fixed_point x = *this; x += r; return x;}
@@ -71,6 +72,8 @@ struct fixed_point {
 	fixed_point operator / (fixed_point r) const { fixed_point x = *this; x /= r; return x;}
 	fixed_point operator | (int32_t r) const { fixed_point x = *this; x |= r; return x;}
 	fixed_point operator & (int32_t r) const { fixed_point x = *this; x &= r; return x;}
+
+	fixed_point operator >> (int32_t r) const { fixed_point x = *this; x.intValue >>= r; return x;}
 	
 	bool operator == (fixed_point r) const { return intValue == r.intValue; }
 	bool operator != (fixed_point r) const { return !(*this == r); }
@@ -85,7 +88,7 @@ struct fixed_point {
 	fixed_point operator * (int32_t r) const { fixed_point x = *this; x *= r; return x;}
 	fixed_point operator / (int32_t r) const { fixed_point x = *this; x /= r; return x;}
 
-	float toFloat() const { return fix2float<p>(intValue); }
+//	float toFloat() const { return fix2float<p>(intValue); }
 	uint32_t toUnsigned() const { return ((uint32_t)intValue) >> p; }
 };
 
@@ -174,9 +177,20 @@ inline fixed_point<p> clamp(const fixed_point<p> a)
 }
 
 template <int p>
+inline fixed_point<p> epsilonFloored(const fixed_point<p> a)
+{
+	fixed_point<p> r;
+	if (a.intValue > EPSILON || a.intValue < -EPSILON)
+		r.intValue = a.intValue;
+	else
+		r.intValue = (a.intValue >= 0 ? EPSILON : -EPSILON);
+	return r;
+}
+
+template <int p>
 inline fixed_point<p> wrapOrClamp(const fixed_point<p> a, const int wrapMode) {
 	fixed_point<p> r;
-	r.intValue = ((wrapMode-1)&(a.intValue & ((1<<p)-1))) | ((-wrapMode) & (a.intValue & -(a.intValue > 0) & -(a.intValue <= (1<<p))) | ((a.intValue > (1<<p) << p)));
+	r.intValue = ((wrapMode-1)&(a.intValue & ((1<<p)-1))) | (((-wrapMode) & (a.intValue & -(a.intValue > 0) & -(a.intValue <= (1<<p)))) | ((a.intValue > (1<<p) << p)));
 	return r;
 }
 
@@ -186,6 +200,7 @@ inline fixed_point<p> fixinterp(fixed_point<p> a, fixed_point<p> b, fixed_point<
 	r.intValue = fixinterp(a.intValue, b.intValue, t);
 	return r;
 }
+
 // specializations for 16.16 format
 
 template <>

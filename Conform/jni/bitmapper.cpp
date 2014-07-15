@@ -6,15 +6,19 @@
 #include <complex>
 #include <algorithm>
 
+using namespace std;
+
 #include "fixed_class.h"
 #include "logstream.h"
 
 #define  LOG_TAG    "Conform"
 
-using namespace std;
-
 static logstream<ANDROID_LOG_INFO> INFO(LOG_TAG);
 static logstream<ANDROID_LOG_DEBUG> DEBUG(LOG_TAG);
+
+const complex<fixpoint> divZeroGuard(complex<fixpoint>&& z) {
+	return z + (fixpoint(!(z.real().intValue|z.imag().intValue)) >> 16);
+}
 
 //Pixel-----------------------------------------------
 
@@ -47,7 +51,7 @@ ostream& operator<<(ostream& os, const Pixel& p) {
 }
 
 ostream &operator<<(ostream &os, const fixed_point<16> &f) {
-	return os << setw(5) << f.toFloat();
+	return os << (f.intValue >> 16) << setw(15) << ios::right <<  '.' << setfill('0') << (((1<<16)-1)&f.intValue); //FIXME: without converting to floats!
 }
 
 //BitmapSampler----------------------------------------
@@ -60,15 +64,18 @@ BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth,
 }
 
 const Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
-	const fixpoint xfix = wrapOrClamp((w.real()+fixpoint(1))/(fixpoint(2))*m_xMult, m_wrapMode)*fixpoint(m_srcWidth-1);
-	const fixpoint yfix = wrapOrClamp((w.imag()+fixpoint(1))/(fixpoint(2))*m_yMult, m_wrapMode)*fixpoint(m_srcHeight-1);
+	const fixpoint xfix = wrapOrClamp(((w.real()+1)/2)*m_xMult, m_wrapMode)*fixpoint(m_srcWidth-1);
+	const fixpoint yfix = wrapOrClamp(((w.imag()+1)/2)*m_yMult, m_wrapMode)*fixpoint(m_srcHeight-1);
 	const fixpoint tx = frac(xfix);
 	const fixpoint ty = frac(yfix);
 	const uint32_t x0 = (xfix-tx).toUnsigned(); //x index of left side
 	const uint32_t y0 = (yfix-ty).toUnsigned(); //y index of bottom (top?) side
-	return Pixel::bilinterp(Pixel(m_srcPixels[y0*m_srcWidth+x0]),Pixel(m_srcPixels[y0*m_srcWidth+x0+1]),
-							Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0]),Pixel(m_srcPixels[(y0+1)*m_srcWidth+(x0+1)]),
-							tx, ty);
+	const Pixel result(Pixel::bilinterp(Pixel(m_srcPixels[y0*m_srcWidth+x0]),
+										Pixel(m_srcPixels[y0*m_srcWidth+x0+1]),
+										Pixel(m_srcPixels[(y0+1)*m_srcWidth+x0]),
+										Pixel(m_srcPixels[(y0+1)*m_srcWidth+(x0+1)]),
+										tx, ty));
+	return result;
 }
 //MappedBitmap----------------------------------------
 
@@ -78,16 +85,22 @@ MappedBitmap::MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const
 }
 
 void MappedBitmap::pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSampler& src) {
+	DEBUG << "pullbackSampledBitmap [START] map=[" << map << "]" << endl;
 	fixpoint zim(-1);
 	for (int v = 0; v < m_destHeight; ++v) {
 		fixpoint zre(-1);
 		for (int u = 0; u < m_destWidth; ++u) {
 			const complex<fixpoint> z(zre,zim);
-			src.bilinearSample(map(z)).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
+			const complex<fixpoint> w(map(z));
+			if (((u % (m_destWidth/4)) == 0)&&((v % (m_destHeight/4)) == 0)) {
+				DEBUG << "u,v=[" << u << "," << v << "], z=[" << z << "], map(z)=[" << w << "], map=[" << map << "]" << endl;
+			}
+			src.bilinearSample(w).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
 			zre += m_reInc;
 		}
 		zim += m_imInc;
 	}
+	DEBUG << "pullbackSampledBitmap [END]" << endl;
 }
 
 //MoebiusTrans----------------------------------------
@@ -108,28 +121,23 @@ MobiusTrans& MobiusTrans::operator=(const MobiusTrans& mt) {
 	return *this;
 }
 
-const MobiusTrans MobiusTrans::hyperbolicIsometry(const complex<fixpoint>& zero) {
+const MobiusTrans MobiusTrans::hyperbolicIsometry(complex<fixpoint>&& zero) {
 	return MobiusTrans(ONE,-zero,-conj(zero),ONE);
 }
 
 const complex<fixpoint> MobiusTrans::operator()(const complex<fixpoint> &z) const {
-	return (m_a*z+m_b)/oneIfZero(m_c*z+m_d);
+	return (m_a*z+m_b)/divZeroGuard(complex<fixpoint>(m_c*z+m_d));
 }
 const MobiusTrans MobiusTrans::operator|(const MobiusTrans& f) const {
 	return MobiusTrans(m_a*f.m_a + m_b*f.m_c, m_a*f.m_b + m_b*f.m_d, m_c*f.m_a + m_d*f.m_c, m_c*f.m_b + m_d*f.m_d);
 }
 const MobiusTrans MobiusTrans::operator-() const {
-	const complex<fixpoint> det(m_a*m_d-m_b*m_c);
-	if (!isZero(det)) {
-		return MobiusTrans(m_d/det, -m_b/det, -m_c/det, m_a/det);
-	} else {
-		return identity;
-	}
+	const complex<fixpoint> det = divZeroGuard(complex<fixpoint>(m_a*m_d-m_b*m_c));
+	return MobiusTrans(m_d/det, -m_b/det, -m_c/det, m_a/det);
 }
 
 ostream& operator<<(ostream &os, const MobiusTrans& mobius) {
-	//return os << fixed << setprecision(4) << '[' << mobius.m_a << "z+" << mobius.m_b << "]/[" << mobius.m_c << "z+" << mobius.m_d << ')';
-	return os << fixed << setprecision(4) << '[' << mobius.m_a << "z+" << mobius.m_b << "]";
+	return os << '[' << mobius.m_a << "z+" << mobius.m_b << "]/[" << mobius.m_c << "z+" << mobius.m_d << ')';
 }
 
 const MobiusTrans MobiusTrans::identity = MobiusTrans();
@@ -185,7 +193,7 @@ BlaschkeMap& BlaschkeMap::operator*=(const MobiusTrans& a) {
 }
 
 ostream& operator<<(ostream &os, const BlaschkeMap& blasch) {
-	os << blasch.m_lhs << 'o';
+//	os << blasch.m_lhs << 'o';
 	os << blasch.m_factors[0];
 	for (int i = 1; i < BlaschkeMap::max_factors; ++i) {
 		if (!blasch.m_factors[i].isIdentity()) {

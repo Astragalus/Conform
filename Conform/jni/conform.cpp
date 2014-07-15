@@ -4,6 +4,8 @@
 #include "logstream.h"
 #include "bitmapper.h"
 
+using namespace std;
+
 #define  LOG_TAG    "Conform"
 
 static logstream<ANDROID_LOG_INFO> INFO(LOG_TAG);
@@ -52,6 +54,7 @@ extern "C" {
 			jfloat scaleFac, jint wrapMode, jfloat p1r, jfloat p1i, jfloat p2r, jfloat p2i, jfloat p3r, jfloat p3i, jfloat p4r, jfloat p4i, jfloat p5r, jfloat p5i, jfloat p6r, jfloat p6i);
 }
 
+
 JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jint numParams, jfloat pivotX, jfloat pivotY,
 			jfloat scaleFac, jint wrapMode, jfloat p1r, jfloat p1i, jfloat p2r, jfloat p2i, jfloat p3r, jfloat p3i, jfloat p4r, jfloat p4i, jfloat p5r, jfloat p5i, jfloat p6r, jfloat p6i) {
 	int status = 0;
@@ -87,11 +90,10 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		return status;
 	}
 
-	const MobiusTrans affine(complex<fixpoint>(scaleFac),complex<fixpoint>(pivotX, pivotY),ZERO,ONE);
+	const MobiusTrans affine(complex<fixpoint>(fixpoint(scaleFac)),complex<fixpoint>(fixpoint(pivotX), fixpoint(pivotY)),ZERO,ONE);
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {
-		const complex<fixpoint> param(complex<fixpoint>(params[2*i],params[2*i+1]));
-		blas *= MobiusTrans::hyperbolicIsometry(param);
+		blas *= MobiusTrans::hyperbolicIsometry(complex<fixpoint>(fixpoint(params[2*i]),fixpoint(params[2*i+1])));
 	}
 	const BlaschkeMap map(blas|-affine);
 
