@@ -3,6 +3,7 @@
 
 #include "logstream.h"
 #include "bitmapper.h"
+#include "signal.h"
 
 using namespace std;
 
@@ -59,6 +60,9 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 			jfloat scaleFac, jint wrapMode, jfloat p1r, jfloat p1i, jfloat p2r, jfloat p2i, jfloat p3r, jfloat p3i, jfloat p4r, jfloat p4i, jfloat p5r, jfloat p5i, jfloat p6r, jfloat p6i) {
 	int status = 0;
 	const float params[12] = {p1r, p1i, p2r, p2i, p3r, p3i, p4r, p4i, p5r, p5i, p6r, p6i};
+
+	signal(SIGFPE, SIG_IGN); //ignore arithmetic errors - tried rooting them out but still get 'em.  Don't care anyway, so...
+
 	AndroidBitmapInfo sourceInfo;
 	status = AndroidBitmap_getInfo(env, bmSource, &sourceInfo);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {

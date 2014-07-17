@@ -40,7 +40,6 @@ Modified by Matthew Cushman in 2014
 
 #define FRAC_MASK(p) ((1<<(p))-1)
 #define INT_MASK(p) ((-1)^FRAC_MASK(p))
-#define EPSILON (1<<4) //divided by 1<<p
 
 // The template argument p in all of the following functions refers to the 
 // fixed point precision (e.g. p = 8 gives 24.8 fixed point functions).
@@ -173,17 +172,6 @@ inline fixed_point<p> clamp(const fixed_point<p> a)
 {
 	fixed_point<p> r;
 	r.intValue = (a.intValue & -(a.intValue > 0) & -(a.intValue <= (1<<p))) | ((a.intValue > (1<<p) << p));
-	return r;
-}
-
-template <int p>
-inline fixed_point<p> epsilonFloored(const fixed_point<p> a)
-{
-	fixed_point<p> r;
-	if (a.intValue > EPSILON || a.intValue < -EPSILON)
-		r.intValue = a.intValue;
-	else
-		r.intValue = (a.intValue >= 0 ? EPSILON : -EPSILON);
 	return r;
 }
 

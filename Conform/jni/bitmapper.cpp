@@ -51,7 +51,9 @@ ostream& operator<<(ostream& os, const Pixel& p) {
 }
 
 ostream &operator<<(ostream &os, const fixed_point<16> &f) {
-	return os << (f.intValue >> 16) << setw(15) << ios::right <<  '.' << setfill('0') << (((1<<16)-1)&f.intValue); //FIXME: without converting to floats!
+	const char minus = f.intValue < 0 ? '-' : ' ';
+	const int32_t absval = abs(f.intValue);
+	return os << setw(0) << right << minus << (absval >> 16) << '.' << setw(4) << right << setfill('0') << (absval>>(16-4));
 }
 
 //BitmapSampler----------------------------------------
@@ -85,22 +87,17 @@ MappedBitmap::MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const
 }
 
 void MappedBitmap::pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSampler& src) {
-	DEBUG << "pullbackSampledBitmap [START] map=[" << map << "]" << endl;
 	fixpoint zim(-1);
 	for (int v = 0; v < m_destHeight; ++v) {
 		fixpoint zre(-1);
 		for (int u = 0; u < m_destWidth; ++u) {
 			const complex<fixpoint> z(zre,zim);
 			const complex<fixpoint> w(map(z));
-			if (((u % (m_destWidth/4)) == 0)&&((v % (m_destHeight/4)) == 0)) {
-				DEBUG << "u,v=[" << u << "," << v << "], z=[" << z << "], map(z)=[" << w << "], map=[" << map << "]" << endl;
-			}
 			src.bilinearSample(w).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
 			zre += m_reInc;
 		}
 		zim += m_imInc;
 	}
-	DEBUG << "pullbackSampledBitmap [END]" << endl;
 }
 
 //MoebiusTrans----------------------------------------
@@ -164,7 +161,7 @@ const complex<fixpoint> BlaschkeMap::operator()(const complex<fixpoint> &z) cons
 	for (int i = 0; i < m_numFactors; ++i) {
 		w *= m_factors[i](z);
 	}
-	return m_lhs.isIdentity() ? w : m_lhs(w);
+	return w;
 }
 BlaschkeMap& operator|(const MobiusTrans& a, BlaschkeMap& b) {
 	b.m_lhs = (a|b.m_lhs);
@@ -193,7 +190,6 @@ BlaschkeMap& BlaschkeMap::operator*=(const MobiusTrans& a) {
 }
 
 ostream& operator<<(ostream &os, const BlaschkeMap& blasch) {
-//	os << blasch.m_lhs << 'o';
 	os << blasch.m_factors[0];
 	for (int i = 1; i < BlaschkeMap::max_factors; ++i) {
 		if (!blasch.m_factors[i].isIdentity()) {
