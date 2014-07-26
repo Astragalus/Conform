@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007, Markus Trenkwalder
+Copyright (c) 2007, 2014, Markus Trenkwalder
 
 Portions taken from the Vicent 3D rendering library
 Copyright (c) 2004, David Blythe, Hans Martin Will

@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.mtc.conform;
 
 import java.util.Observable;
@@ -104,10 +114,6 @@ public class BitmapperView extends ImageView {
 		}
 		
 		public int size() {
-			final int[] ints = new int[] {1,2};
-			for (int i : ints) {
-				++i;
-			}
 			return m_normCoords.size();
 		}
 		
@@ -214,7 +220,7 @@ public class BitmapperView extends ImageView {
 			dst.apply(m_invTransformer);
 		}
 		public void screenToNormalizedPoint(final ComplexElement src, final ComplexElement dst) {			
-			m_screenToSquareMat.mapPoints(dst.getParent().arr, dst.getIndex(), src.getParent().arr, src.getIndex(), 1);
+			m_screenToSquareMat.mapPoints(dst.getParent().arr, dst.getIndex()<<1, src.getParent().arr, src.getIndex()<<1, 1);
 			m_invTransformer.actOn(dst);
 		}
 		public void normalizedToScreenPoints(final ComplexArray src, final ComplexArray dst) {
@@ -322,8 +328,8 @@ public class BitmapperView extends ImageView {
 	private Bitmap m_srcBitmap;
 	private Bitmap m_destBitmap = null;
 	
-	private int m_drawWidth = 320;
-	private int m_drawHeight = 320;
+	private int m_drawWidth = 384;
+	private int m_drawHeight = 384;
 	
 	private final BitmapperTouchHandler m_touchHandler;
 	private final TransformationState m_transState;

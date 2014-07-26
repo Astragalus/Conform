@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007, Markus Trenkwalder
+Copyright (c) 2007, 2014, Markus Trenkwalder
 
 All rights reserved.
 
