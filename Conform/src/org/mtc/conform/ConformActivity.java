@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.mtc.conform;
 
+import org.mtc.conform.BitmapperView.BitmapperMode.TouchMode;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -49,9 +51,9 @@ public class ConformActivity extends Activity {
 		return true;
     }
     
-    private boolean setTouchMode(final BitmapperView.TouchMode touchMode) {
+    private boolean setTouchMode(final TouchMode touchMode) {
     	getBitmapperView().setTouchMode(touchMode);
-    	return touchMode == BitmapperView.TouchMode.PAN;
+    	return touchMode == TouchMode.PAN;
     }
     
     private boolean addParam() {
@@ -75,7 +77,7 @@ public class ConformActivity extends Activity {
     		handledEvent = true;
     		break;
     	case R.id.touchMode:
-    		item.setChecked((!item.isChecked() && setTouchMode(BitmapperView.TouchMode.PAN)) || setTouchMode(BitmapperView.TouchMode.PARAM));
+    		item.setChecked((!item.isChecked() && setTouchMode(TouchMode.PAN)) || setTouchMode(TouchMode.PARAM));
     		handledEvent = true;
     		break;
     	case R.id.addParamMenuItem:
