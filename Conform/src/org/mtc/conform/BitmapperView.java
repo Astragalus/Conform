@@ -10,14 +10,14 @@
  *******************************************************************************/
 package org.mtc.conform;
 
-import java.util.Observable;
-import java.util.Observer;
 import org.mtc.conform.BitmapperView.BitmapperMode.TouchMode;
+import org.mtc.conform.TransformationState.OnTransformStateChangedListener;
 import org.mtc.conform.math.Complex;
 import org.mtc.conform.math.ComplexArray;
 import org.mtc.conform.math.ComplexArray.ComplexElement;
 import org.mtc.conform.math.IComplex;
 import org.mtc.conform.math.IComplexActor;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -53,7 +53,7 @@ public class BitmapperView extends ImageView {
 		}
 	}
 
-	public class ParamHolder implements Observer {
+	public class ParamHolder implements OnTransformStateChangedListener {
 		public final static int MAX_PARAMS = 6;
 		public final static float RADIUS = 100.0f;
 
@@ -61,7 +61,7 @@ public class BitmapperView extends ImageView {
 			m_screenCoords = new ComplexArray(MAX_PARAMS);
 			m_normCoords = new ComplexArray(MAX_PARAMS);
 			m_trans = transStateHolder;
-			m_trans.addObserver(this);
+			m_trans.setOnTransformStateChangedListener(this);
 			addParamNormCoords(0.0f, 0.0f);
 		}
 		
@@ -118,14 +118,6 @@ public class BitmapperView extends ImageView {
 			invalidate();
 		}
 		
-		/**
-		 * TransformationState has changed.
-		 */
-		@Override
-		public void update(Observable observable, Object data) {
-			updateScreenCoords();
-		}
-		
 		public ComplexArray getNormalizedParams() {
 			return m_normCoords;
 		}
@@ -149,6 +141,11 @@ public class BitmapperView extends ImageView {
 		final private ComplexArray m_normCoords;
 		final private ComplexArray m_screenCoords;
 		final private TransformationState m_trans;
+
+		@Override
+		public void onTransformStateChanged(TransformationState trans) {
+			updateScreenCoords();
+		}
 	}
 	
 	public static class BitmapperMode {
@@ -210,12 +207,10 @@ public class BitmapperView extends ImageView {
 	protected void onDraw(final Canvas canvas) {	
 //		if (count == 0)
 //			start = System.currentTimeMillis();
-		if (m_transState.hasChanged()) {
-			m_destBitmap.eraseColor(0);
-			ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.getCurrTrans(), m_wrapMode);
-			canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
-			m_paramHolder.applyScreenCoords(m_poleDrawer.setCanvas(canvas));
-		}
+		m_destBitmap.eraseColor(0);
+		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.getCurrTrans(), m_wrapMode);
+		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
+		m_paramHolder.applyScreenCoords(m_poleDrawer.setCanvas(canvas));
 //		++count;
 //		if ((time = System.currentTimeMillis()-start) < 3000) {
 //			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));

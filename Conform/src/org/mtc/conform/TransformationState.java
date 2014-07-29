@@ -1,17 +1,15 @@
 package org.mtc.conform;
 
-import java.util.Observable;
-
 import org.mtc.conform.math.ComplexAffineTrans;
 import org.mtc.conform.math.ComplexArray;
+import org.mtc.conform.math.ComplexArray.ComplexElement;
 import org.mtc.conform.math.IComplex;
 import org.mtc.conform.math.IComplexActor;
-import org.mtc.conform.math.ComplexArray.ComplexElement;
 
 import android.graphics.Matrix;
 import android.widget.ImageView;
 
-public class TransformationState extends Observable {
+public class TransformationState {
 	final private ImageView m_view;
 	final private int m_drawWidth;
 	final private int m_drawHeight;
@@ -32,12 +30,26 @@ public class TransformationState extends Observable {
 			m_currTrans.applyInverse(param);
 		}			
 	};
+	private OnTransformStateChangedListener m_listener;
+	
+	public static interface OnTransformStateChangedListener {
+		public void onTransformStateChanged(final TransformationState trans);
+	}
 
 	public TransformationState(final ImageView view, final int drawWidth, final int drawHeight) {
 		m_view = view;
 		m_drawWidth = drawWidth;
 		m_drawHeight = drawHeight;
-		clearChanged();
+	}
+	
+	public void setOnTransformStateChangedListener(OnTransformStateChangedListener listener) {
+		m_listener = listener;
+	}
+	
+	private void updateTranformStateListener() {
+		if (m_listener != null) {
+			m_listener.onTransformStateChanged(this);
+		}
 	}
 	
 	public void updateMatrices() {
@@ -47,22 +59,18 @@ public class TransformationState extends Observable {
 		m_view.getImageMatrix().invert(m_screenToSquareMat);
 		m_screenToSquareMat.postScale(1.0f/m_drawWidth, 1.0f/m_drawHeight);
 		m_screenToSquareMat.postScale(2.0f, 2.0f, 1.0f, 1.0f);
-		setChanged();
-		notifyObservers();
-		setChanged();
+		updateTranformStateListener();
 	}
 	public ComplexAffineTrans getCurrTrans() {
 		return m_currTrans;
 	}
 	public void scale(final float s, final float x, final float y) {
 		m_currTrans.postMult(ComplexAffineTrans.scaling(s, screenToNormalizedPoint(m_pivot.re(x).im(y))));
-		notifyObservers();
-		setChanged();
+		updateTranformStateListener();
 	}
 	public void translate(final float x, final float y) {
 		m_currTrans.postMult(ComplexAffineTrans.translation(screenToNormalizedVector(m_translate.re(-x).im(-y))));
-		notifyObservers();
-		setChanged();
+		updateTranformStateListener();
 	}
 	public ComplexElement screenToNormalizedVector(ComplexElement srcdst) {
 		final ComplexArray backingArray = srcdst.getParent();
