@@ -12,8 +12,16 @@ package org.mtc.conform.math;
 
 import java.util.Iterator;
 
-public class ComplexArray implements Iterable<IComplex> {
+public class ComplexArray {
 
+	public interface IComplexAction {
+		void actOn(IComplex z);
+	}
+	
+	public interface IComplexPredicate {
+		boolean eval(IComplex z);
+	}
+	
 	final public float[] arr;
 	final public int capacity;
 	public int size;
@@ -55,12 +63,23 @@ public class ComplexArray implements Iterable<IComplex> {
 		return front().parallelTo(other);
 	}
 	
+	//OK this is the definition of trouble.  But let's see what happens - why not?
 	private final ComplexElement asComplex = new ComplexElement();
-	//probably should be synchronized or something, but I make the rules around here muahahaha!!!
-	public void apply(final IComplexActor action) {
+
+	public void apply(final IComplexAction action) {
 		for (asComplex.idx = 0; asComplex.idx < size<<1; asComplex.idx += 2) {
 			action.actOn(asComplex);
 		}
+	}
+	
+	public ComplexElement find(final IComplexPredicate condition) {
+		final ComplexElement element = new ComplexElement();
+		for (element.idx = 0; element.idx < size<<1; element.idx += 2) {
+			if (condition.eval(element)) {
+				return element;
+			}
+		}
+		return null;
 	}
 	
 	public class ComplexIterator implements Iterator<IComplex> {
@@ -284,8 +303,8 @@ public class ComplexArray implements Iterable<IComplex> {
 		}
 	}
 	
-	private static IComplexActor getStringifier(final StringBuilder sb) {
-		return new IComplexActor() {
+	private static IComplexAction getStringifier(final StringBuilder sb) {
+		return new IComplexAction() {
 			boolean isFirst = true;
 			@Override
 			public void actOn(IComplex z) {
@@ -306,8 +325,4 @@ public class ComplexArray implements Iterable<IComplex> {
 		return sb.append(']').toString();
 	}
 
-	@Override
-	public Iterator<IComplex> iterator() {
-		return new ComplexIterator();
-	}
 }

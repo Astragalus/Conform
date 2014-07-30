@@ -15,8 +15,9 @@ import org.mtc.conform.TransformationState.OnTransformStateChangedListener;
 import org.mtc.conform.math.Complex;
 import org.mtc.conform.math.ComplexArray;
 import org.mtc.conform.math.ComplexArray.ComplexElement;
+import org.mtc.conform.math.ComplexArray.IComplexAction;
+import org.mtc.conform.math.ComplexArray.IComplexPredicate;
 import org.mtc.conform.math.IComplex;
-import org.mtc.conform.math.IComplexActor;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -34,7 +35,7 @@ public class BitmapperView extends ImageView {
 
 	public static final String TAG = "Conform";
 	
-	private static class ParamDrawer implements IComplexActor {
+	private static class ParamDrawer implements IComplexAction {
 		private Canvas canvas;
 		private final Paint paint;
 		private final int radius;
@@ -84,23 +85,22 @@ public class BitmapperView extends ImageView {
 			invalidate();
 		}
 		
-		public void applyScreenCoords(final IComplexActor action) {
+		public void applyScreenCoords(final IComplexAction action) {
 			m_screenCoords.apply(action);
 		}
 		
-		public void applyNormCoords(final IComplexActor action) {
+		public void applyNormCoords(final IComplexAction action) {
 			m_normCoords.apply(action);
 		}
 		
 		public ComplexElement findParamNearCoords(float scrX, float scrY) {
-			ComplexElement result = null;
 			final Complex at = new Complex(scrX, scrY);
-			for (IComplex param : m_screenCoords) {
-				if (param.distSq(at) <= RADIUS*RADIUS) {
-					result = (ComplexElement) param;
-					break;
-				} 
-			}
+			final ComplexElement result = m_screenCoords.find(new IComplexPredicate() {
+				@Override
+				public boolean eval(IComplex z) {
+					return (z.distSq(at) <= RADIUS*RADIUS);
+				}
+			});
 			return result;
 		}
 		
@@ -124,18 +124,7 @@ public class BitmapperView extends ImageView {
 		
 		@Override
 		public String toString() {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("norm[");
-			for (IComplex norm : m_normCoords) {
-				sb.append(norm.toString()).append(' ');
-			}
-			sb.append(']');
-			sb.append("Screen[");
-			for (IComplex scr : m_screenCoords) {
-				sb.append(scr.toString()).append(' ');
-			}
-			sb.append(']');
-			return sb.toString();
+			return "norm[" + m_normCoords.toString() + "] screen[" + m_screenCoords.toString() + "]";
 		}
 		
 		final private ComplexArray m_normCoords;
@@ -143,7 +132,7 @@ public class BitmapperView extends ImageView {
 		final private TransformationState m_trans;
 
 		@Override
-		public void onTransformStateChanged(TransformationState trans) {
+		public void onTransformStateChanged() {
 			updateScreenCoords();
 		}
 	}

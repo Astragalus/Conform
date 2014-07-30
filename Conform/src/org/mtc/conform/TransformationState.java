@@ -4,7 +4,7 @@ import org.mtc.conform.math.ComplexAffineTrans;
 import org.mtc.conform.math.ComplexArray;
 import org.mtc.conform.math.ComplexArray.ComplexElement;
 import org.mtc.conform.math.IComplex;
-import org.mtc.conform.math.IComplexActor;
+import org.mtc.conform.math.ComplexArray.IComplexAction;
 
 import android.graphics.Matrix;
 import android.widget.ImageView;
@@ -18,13 +18,13 @@ public class TransformationState {
 	final private ComplexAffineTrans m_currTrans = ComplexAffineTrans.IDENT;
 	final private ComplexElement m_pivot = new ComplexArray(1,1).front().assignFrom(IComplex.ZERO);
 	final private ComplexElement m_translate = new ComplexArray(1,1).front().assignFrom(IComplex.ZERO);
-	final private IComplexActor m_fwdTransformer = new IComplexActor() {
+	final private IComplexAction m_fwdTransformer = new IComplexAction() {
 		@Override
 		public void actOn(IComplex param) {
 			m_currTrans.apply(param);
 		}			
 	};
-	final private IComplexActor m_invTransformer = new IComplexActor() {			
+	final private IComplexAction m_invTransformer = new IComplexAction() {			
 		@Override
 		public void actOn(IComplex param) {
 			m_currTrans.applyInverse(param);
@@ -33,7 +33,7 @@ public class TransformationState {
 	private OnTransformStateChangedListener m_listener;
 	
 	public static interface OnTransformStateChangedListener {
-		public void onTransformStateChanged(final TransformationState trans);
+		public void onTransformStateChanged();
 	}
 
 	public TransformationState(final ImageView view, final int drawWidth, final int drawHeight) {
@@ -48,7 +48,7 @@ public class TransformationState {
 	
 	private void updateTranformStateListener() {
 		if (m_listener != null) {
-			m_listener.onTransformStateChanged(this);
+			m_listener.onTransformStateChanged();
 		}
 	}
 	

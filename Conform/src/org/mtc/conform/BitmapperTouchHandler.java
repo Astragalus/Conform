@@ -7,8 +7,8 @@ import org.mtc.conform.math.ComplexArray.ComplexElement;
 
 import android.content.Context;
 import android.util.SparseArray;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
