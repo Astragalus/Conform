@@ -76,6 +76,12 @@ public class ConformActivity extends Activity {
     		startActivityForResult(imagePickIntent, IMAGE_PICK);
     		handledEvent = true;
     		break;
+    	case R.id.saveImage:
+    		final Intent saveImageIntent = Intent.createChooser(new Intent(Intent.ACTION_SEND), "Share Image");
+    		saveImageIntent.setType("image/*");
+    		startActivity(saveImageIntent);
+    		handledEvent = true;
+    		break;
     	case R.id.touchMode:
     		item.setChecked((!item.isChecked() && setTouchMode(TouchMode.PAN)) || setTouchMode(TouchMode.PARAM));
     		handledEvent = true;

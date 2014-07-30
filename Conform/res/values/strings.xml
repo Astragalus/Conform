@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Conform</string>
     <string name="menu_item_load_image">Load Image</string>
+    <string name="menu_item_save_image">Save Image</string>
     <string name="menu_item_should_tile">Tile</string>
     <string name="menu_item_should_clamp">Clamp</string>
     <string name="menu_item_pan_mode">Pan Mode</string>

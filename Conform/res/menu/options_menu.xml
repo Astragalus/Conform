@@ -26,6 +26,12 @@
         android:title="@string/menu_item_remove_zero"
         android:showAsAction="ifRoom">
     </item>
+    <item
+        android:id="@+id/saveImage"
+        android:icon="@android:drawable/ic_popup_disk_full"
+        android:title="@string/menu_item_save_image"
+        android:showAsAction="ifRoom">
+    </item>
     <group
         android:id="@+id/wrapModeMenuGroup"
         android:checkableBehavior="single">
