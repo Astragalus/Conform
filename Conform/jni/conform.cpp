@@ -61,15 +61,12 @@ const char *bitmapFormatToString(const int fmt) {
 }
 
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jint numParams, jfloat pivotX, jfloat pivotY,
-			jfloat scaleFac, jint wrapMode, jfloat p1r, jfloat p1i, jfloat p2r, jfloat p2i, jfloat p3r, jfloat p3i, jfloat p4r, jfloat p4i, jfloat p5r, jfloat p5i, jfloat p6r, jfloat p6i);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
 }
 
 
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jint numParams, jfloat pivotX, jfloat pivotY,
-			jfloat scaleFac, jint wrapMode, jfloat p1r, jfloat p1i, jfloat p2r, jfloat p2i, jfloat p3r, jfloat p3i, jfloat p4r, jfloat p4i, jfloat p5r, jfloat p5i, jfloat p6r, jfloat p6i) {
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
 	int status = 0;
-	const float params[12] = {p1r, p1i, p2r, p2i, p3r, p3i, p4r, p4i, p5r, p5i, p6r, p6i};
 
 	signal(SIGFPE, SIG_IGN); //ignore arithmetic errors - tried rooting them out but still get 'em.  Don't care anyway, so...
 
@@ -104,6 +101,9 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		return status;
 	}
 
+	jboolean isCopy;
+	jfloat* params = env->GetFloatArrayElements(paramArray, &isCopy);
+
 	const MobiusTrans affine(complex<fixpoint>(fixpoint(scaleFac)),complex<fixpoint>(fixpoint(pivotX), fixpoint(pivotY)),ZERO,ONE);
 	BlaschkeMap blas;
 	for (int i = 0; i < numParams; ++i) {
@@ -114,6 +114,8 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 	MappedBitmap viewPlane(destPtr, destInfo.width, destInfo.height);
 	const BitmapSampler sampler(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
 	viewPlane.pullbackSampledBitmap(map, sampler);
+
+	env->ReleaseFloatArrayElements(paramArray, params, 0);
 
 	status = AndroidBitmap_unlockPixels(env, bmSource);
 	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {

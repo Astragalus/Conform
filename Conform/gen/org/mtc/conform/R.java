@@ -36,10 +36,11 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int bitmapperView=0x7f080000;
         public static final int loadImage=0x7f080001;
         public static final int removeParamMenuItem=0x7f080004;
-        public static final int shouldClamp=0x7f080007;
-        public static final int shouldTile=0x7f080006;
+        public static final int saveImage=0x7f080005;
+        public static final int shouldClamp=0x7f080008;
+        public static final int shouldTile=0x7f080007;
         public static final int touchMode=0x7f080002;
-        public static final int wrapModeMenuGroup=0x7f080005;
+        public static final int wrapModeMenuGroup=0x7f080006;
     }
     public static final class layout {
         public static final int activity_conform=0x7f030000;
@@ -49,13 +50,14 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     }
     public static final class string {
         public static final int app_name=0x7f050000;
-        public static final int default_bitmap_desc=0x7f050007;
-        public static final int menu_item_add_param=0x7f050005;
+        public static final int default_bitmap_desc=0x7f050008;
+        public static final int menu_item_add_param=0x7f050006;
         public static final int menu_item_load_image=0x7f050001;
-        public static final int menu_item_pan_mode=0x7f050004;
-        public static final int menu_item_remove_zero=0x7f050006;
-        public static final int menu_item_should_clamp=0x7f050003;
-        public static final int menu_item_should_tile=0x7f050002;
+        public static final int menu_item_pan_mode=0x7f050005;
+        public static final int menu_item_remove_zero=0x7f050007;
+        public static final int menu_item_save_image=0x7f050002;
+        public static final int menu_item_should_clamp=0x7f050004;
+        public static final int menu_item_should_tile=0x7f050003;
     }
     public static final class style {
         /** 

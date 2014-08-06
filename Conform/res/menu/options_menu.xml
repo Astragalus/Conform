@@ -28,7 +28,7 @@
     </item>
     <item
         android:id="@+id/saveImage"
-        android:icon="@android:drawable/ic_popup_disk_full"
+        android:icon="@android:drawable/ic_menu_save"
         android:title="@string/menu_item_save_image"
         android:showAsAction="ifRoom">
     </item>

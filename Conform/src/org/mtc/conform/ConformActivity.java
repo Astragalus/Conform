@@ -78,7 +78,7 @@ public class ConformActivity extends Activity {
     		break;
     	case R.id.saveImage:
     		final Intent saveImageIntent = Intent.createChooser(new Intent(Intent.ACTION_SEND), "Share Image");
-    		saveImageIntent.setType("image/*");
+    		saveImageIntent.setType("image/png");
     		startActivity(saveImageIntent);
     		handledEvent = true;
     		break;

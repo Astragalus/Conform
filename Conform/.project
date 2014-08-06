@@ -50,32 +50,32 @@
 		<link>
 			<name>include-gcc</name>
 			<type>2</type>
-			<location>C:/dev/android-ndk-r9d/toolchains/arm-linux-androideabi-4.8/prebuilt/windows-x86_64/lib/gcc/arm-linux-androideabi/4.8/include</location>
+			<location>/usr/share/android-ndk-r10/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/lib/gcc/arm-linux-androideabi/4.8/include</location>
 		</link>
 		<link>
 			<name>include-gcc-fixed</name>
 			<type>2</type>
-			<location>C:/dev/android-ndk-r9d/toolchains/arm-linux-androideabi-4.8/prebuilt/windows-x86_64/lib/gcc/arm-linux-androideabi/4.8/include-fixed</location>
+			<location>/usr/share/android-ndk-r10/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/lib/gcc/arm-linux-androideabi/4.8/include-fixed</location>
 		</link>
 		<link>
 			<name>include-gnustl</name>
 			<type>2</type>
-			<location>C:/dev/android-ndk-r9d/sources/cxx-stl/gnu-libstdc++/4.8/include</location>
+			<location>/usr/share/android-ndk-r10/sources/cxx-stl/gnu-libstdc++/4.8/include</location>
 		</link>
 		<link>
 			<name>include-gnustl-armeabi-v7a</name>
 			<type>2</type>
-			<location>C:/dev/android-ndk-r9d/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include</location>
+			<location>/usr/share/android-ndk-r10/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include</location>
 		</link>
 		<link>
 			<name>include-platforms</name>
 			<type>2</type>
-			<location>C:/dev/android-ndk-r9d/platforms/android-19/arch-arm/usr/include</location>
+			<location>/usr/share/android-ndk-r10/platforms/android-19/arch-arm/usr/include</location>
 		</link>
 		<link>
 			<name>include-stlport</name>
 			<type>2</type>
-			<location>C:/dev/android-ndk-r9d/sources/cxx-stl/stlport/stlport</location>
+			<location>/usr/share/android-ndk-r10/sources/cxx-stl/stlport/stlport</location>
 		</link>
 	</linkedResources>
 </projectDescription>

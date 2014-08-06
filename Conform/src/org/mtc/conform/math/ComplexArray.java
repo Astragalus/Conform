@@ -97,7 +97,7 @@ public class ComplexArray {
 	/**
 	 * A class representing a complex number with float components.  Warning: very mutable (for speed)!
 	 */
-	public class ComplexElement implements IComplex, Iterator<IComplex> {
+	public class ComplexElement implements IComplex {
 		
 		private int idx;
 		
@@ -266,22 +266,6 @@ public class ComplexArray {
 		public ComplexElement im(float i) {
 			arr[idx+1] = i;
 			return this;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return (idx>>1) < size;
-		}
-
-		@Override
-		public IComplex next() {
-			idx += 2;
-			return this;
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
 		}
 	}
 
