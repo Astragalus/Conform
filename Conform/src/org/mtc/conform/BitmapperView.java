@@ -229,6 +229,10 @@ public class BitmapperView extends ImageView {
 		invalidate();
 	}
 	
+	public Bitmap getImageBitmap() {
+		return ((BitmapDrawable)getDrawable()).getBitmap(); 
+	}
+	
 	public void setWrapMode(final ConformLib.WrapMode wrapMode) {
 		m_wrapMode = wrapMode;
 		Log.i(TAG, "Wrap mode set to: " + wrapMode.name());

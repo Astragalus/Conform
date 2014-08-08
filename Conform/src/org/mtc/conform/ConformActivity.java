@@ -16,7 +16,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore.Images;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,6 +29,8 @@ public class ConformActivity extends Activity {
 	public final static String TAG = "Conform";
 
 	private final static int IMAGE_PICK = 31415;
+	
+	private static int outputFileUid = 1;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,9 +81,7 @@ public class ConformActivity extends Activity {
     		handledEvent = true;
     		break;
     	case R.id.saveImage:
-    		final Intent saveImageIntent = Intent.createChooser(new Intent(Intent.ACTION_SEND), "Share Image");
-    		saveImageIntent.setType("image/png");
-    		startActivity(saveImageIntent);
+    		savePullbackImage(getBitmapperView().getImageBitmap());
     		handledEvent = true;
     		break;
     	case R.id.touchMode:
@@ -104,6 +106,20 @@ public class ConformActivity extends Activity {
     		break;
     	}
     	return handledEvent || super.onOptionsItemSelected(item);
+    }
+    
+    private static String getSavedImageName() {
+    	return "conform-saved-" + outputFileUid++;
+    }
+    
+    private void savePullbackImage(final Bitmap bmp) {
+    	final String path = Images.Media.insertImage(getContentResolver(), bmp, getSavedImageName(), null);
+    	final Uri bmpUri = Uri.parse(path);
+		final Intent bmpSaveIntent = new Intent(Intent.ACTION_SEND);
+		bmpSaveIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		bmpSaveIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+		bmpSaveIntent.setType("image/png");
+		startActivity(Intent.createChooser(bmpSaveIntent, "Save Pullback Image"));
     }
     
     @Override

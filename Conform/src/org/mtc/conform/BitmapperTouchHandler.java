@@ -48,37 +48,35 @@ public class BitmapperTouchHandler extends SimpleOnGestureListener implements On
 	}
 	private boolean onParamChgEvent(MotionEvent event) {
 		boolean eventConsumed = false;
-		final int numPtrs = event.getPointerCount();
-		switch (event.getAction()) {
-		case MotionEvent.ACTION_DOWN:
-		case MotionEvent.ACTION_POINTER_DOWN:
-			for (int i = 0; i < numPtrs; ++i) {
-				final ComplexElement param = m_paramHolder.findParamNearCoords(event.getX(i), event.getY(i));
-				if (param != null) {
-					m_ptrIdToParam.put(event.getPointerId(i), param);
+			switch (event.getActionMasked()) {
+			case MotionEvent.ACTION_DOWN:
+			case MotionEvent.ACTION_POINTER_DOWN:
+				final int ptrIdx = event.getActionIndex();
+				final ComplexElement paramTouched = m_paramHolder.findParamNearCoords(event.getX(ptrIdx), event.getY(ptrIdx));
+				if (paramTouched != null) {
+					m_ptrIdToParam.put(event.getPointerId(ptrIdx), paramTouched);
 					eventConsumed |= true;
 				}
-			}
-			break;
-		case MotionEvent.ACTION_MOVE:
-			for (int i = 0; i < numPtrs; ++i) {
-				final ComplexElement param = m_ptrIdToParam.get(event.getPointerId(i));
-				if (param != null) {
-					m_paramHolder.setParamScreenCoords(param, event.getX(i), event.getY(i));
-					eventConsumed |= true;
+				break;
+			case MotionEvent.ACTION_MOVE:
+				for (int pos = 0; pos < event.getHistorySize(); ++pos) {
+					for (int i = 0; i < event.getPointerCount(); ++i) {
+						final ComplexElement param = m_ptrIdToParam.get(event.getPointerId(i));
+						if (param != null) {
+							m_paramHolder.setParamScreenCoords(param, event.getHistoricalX(i,pos), event.getHistoricalY(i,pos));
+							eventConsumed |= true;
+						}
+					}
 				}
+				break;
+			case MotionEvent.ACTION_UP:
+			case MotionEvent.ACTION_POINTER_UP:
+				m_ptrIdToParam.remove(event.getPointerId(event.getActionIndex()));
+				break;
+			case MotionEvent.ACTION_CANCEL:
+				m_ptrIdToParam.clear();
+				break;
 			}
-			break;
-		case MotionEvent.ACTION_UP:
-		case MotionEvent.ACTION_POINTER_UP:
-			for (int i = 0; i < numPtrs; ++i) {
-				m_ptrIdToParam.remove(event.getPointerId(i));
-			}
-			break;
-		case MotionEvent.ACTION_CANCEL:
-			m_ptrIdToParam.clear();
-			break;
-		}
 		return eventConsumed;
 	}
 	@Override
