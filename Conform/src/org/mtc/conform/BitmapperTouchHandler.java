@@ -35,15 +35,9 @@ public class BitmapperTouchHandler extends SimpleOnGestureListener implements On
 	}
 	public boolean onTouchEvent(MotionEvent event) {
 		boolean processed = false;
-		switch (m_touchMode.getTouchMode()) {
-		case PARAM:
-			processed |= onParamChgEvent(event);
-			break;
-		case PAN:
-			processed |= m_zoomDetector.onTouchEvent(event);
-			processed |= m_gestureDetector.onTouchEvent(event);
-			break;
-		}
+		processed |= onParamChgEvent(event);
+		processed |= m_zoomDetector.onTouchEvent(event);
+		processed |= m_gestureDetector.onTouchEvent(event);
 		return processed;
 	}
 	private boolean onParamChgEvent(MotionEvent event) {

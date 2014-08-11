@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.mtc.conform;
 
-import org.mtc.conform.BitmapperView.BitmapperMode.TouchMode;
+import org.mtc.conform.BitmapperView.BitmapperMode.Mode;
 import org.mtc.conform.TransformationState.OnTransformStateChangedListener;
 import org.mtc.conform.math.Complex;
 import org.mtc.conform.math.ComplexArray;
@@ -138,18 +138,18 @@ public class BitmapperView extends ImageView {
 	}
 	
 	public static class BitmapperMode {
-		public enum TouchMode {
-			PARAM(0),
-			PAN(1);
-			private TouchMode(final int mode) {this.mode =  mode;}
+		public enum Mode {
+			DOMAIN(0),
+			CODOMAIN(1);
+			private Mode(final int mode) {this.mode =  mode;}
 			public int getInt() {return mode;}
 			private final int mode;
 		}
-		private TouchMode m_touchMode = TouchMode.PARAM;
-		public TouchMode getTouchMode() {
+		private Mode m_touchMode = Mode.DOMAIN;
+		public Mode getTouchMode() {
 			return m_touchMode;
 		}
-		public void setTouchMode(final TouchMode touchMode) {
+		public void setTouchMode(final Mode touchMode) {
 			m_touchMode = touchMode;
 		}
 	}
@@ -239,13 +239,13 @@ public class BitmapperView extends ImageView {
 		invalidate();
 	}
 	
-	public void setTouchMode(final TouchMode touchMode) {
+	public void setTouchMode(final Mode touchMode) {
 		m_mode.m_touchMode = touchMode;
 		Log.i(TAG, "touch mode  [" + touchMode.name() + "]");
 		invalidate();
 	}
 	
-	public TouchMode getTouchMode() {
+	public Mode getTouchMode() {
 		return m_mode.m_touchMode;
 	}
 	
