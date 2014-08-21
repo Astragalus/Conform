@@ -139,8 +139,9 @@ const MobiusTrans MobiusTrans::operator|(const MobiusTrans& f) const {
 	return MobiusTrans(m_a*f.m_a + m_b*f.m_c, m_a*f.m_b + m_b*f.m_d, m_c*f.m_a + m_d*f.m_c, m_c*f.m_b + m_d*f.m_d);
 }
 const MobiusTrans MobiusTrans::operator-() const {
-	const complex<fixpoint> det = divZeroGuard(complex<fixpoint>(m_a*m_d-m_b*m_c));
-	return MobiusTrans(m_d/det, -m_b/det, -m_c/det, m_a/det);
+//	const complex<fixpoint> det = divZeroGuard(complex<fixpoint>(m_a*m_d-m_b*m_c));
+//	return MobiusTrans(m_d/det, -m_b/det, -m_c/det, m_a/det);
+	return MobiusTrans(m_d, -m_b, -m_c, m_a);
 }
 
 ostream& operator<<(ostream &os, const MobiusTrans& mobius) {

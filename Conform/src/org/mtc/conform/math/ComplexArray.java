@@ -28,7 +28,7 @@ public class ComplexArray {
 	
 	public ComplexArray(final int capacity) {
 		this.capacity = capacity;
-		arr = new float[2*capacity];
+		arr = new float[2*(capacity+1)];
 		size = 0;
 	}
 

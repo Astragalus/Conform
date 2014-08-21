@@ -20,7 +20,6 @@ public class BitmapperTouchHandler extends SimpleOnGestureListener implements On
 	private final ScaleGestureDetector m_zoomDetector;
 	private final GestureDetector m_gestureDetector;
 	private final TransformationState m_state;
-	private final BitmapperMode m_touchMode;
 	private final ParamHolder m_paramHolder;
 	private final SparseArray<ComplexElement> m_ptrIdToParam;
 	
@@ -30,15 +29,10 @@ public class BitmapperTouchHandler extends SimpleOnGestureListener implements On
 		m_gestureDetector = new GestureDetector(context, this);
 		m_ptrIdToParam = new SparseArray<ComplexElement>(5);
 		m_state = state;
-		m_touchMode = touchMode;
 		m_paramHolder = paramHolder;
 	}
 	public boolean onTouchEvent(MotionEvent event) {
-		boolean processed = false;
-		processed |= onParamChgEvent(event);
-		processed |= m_zoomDetector.onTouchEvent(event);
-		processed |= m_gestureDetector.onTouchEvent(event);
-		return processed;
+		return onParamChgEvent(event) ||   m_gestureDetector.onTouchEvent(event) | m_zoomDetector.onTouchEvent(event);
 	}
 	private boolean onParamChgEvent(MotionEvent event) {
 		boolean eventConsumed = false;
