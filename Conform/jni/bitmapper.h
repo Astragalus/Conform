@@ -54,6 +54,7 @@ ostream &operator<<(ostream &os, const fixed_point<16> &f);
 class BitmapSampler {
 public:
 	BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth, const uint32_t srcHeight, const int wrapMode);
+	//BitmapSampler(const BitmapSampler& o);
 	const Pixel bilinearSample(const complex<fixpoint> &w) const;
 private:
 	const uint32_t *m_srcPixels;
@@ -90,7 +91,7 @@ public:
 	explicit BlaschkeMap();
 	explicit BlaschkeMap(const MobiusTrans& a);
 	explicit BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b);
-	explicit BlaschkeMap(const BlaschkeMap& g);
+	BlaschkeMap(const BlaschkeMap& g);
 	const complex<fixpoint> operator()(const complex<fixpoint> &z) const;
 	friend BlaschkeMap& operator|(const MobiusTrans& a, BlaschkeMap& b);
 	friend BlaschkeMap& operator|(BlaschkeMap& b, const MobiusTrans& a);
@@ -106,9 +107,12 @@ private:
 
 class MappedBitmap {
 public:
-	MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight);
-	void pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSampler& src);
+	MappedBitmap(const BitmapSampler& src, uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight, const BlaschkeMap& map);
+	void pullbackSlice(const int startHeight, const int endHeight);
+	void pullbackSampledBitmap();
 private:
+	const BlaschkeMap& m_map;
+	const BitmapSampler& m_src;
 	uint32_t *m_destPixels;
 	const int m_destWidth;
 	const int m_destHeight;

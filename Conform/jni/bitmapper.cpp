@@ -15,13 +15,15 @@
 #include <sstream>
 #include <complex>
 #include <algorithm>
-
+#include <future>
 using namespace std;
 
 #include "fixed_class.h"
 #include "logstream.h"
 
 #define  LOG_TAG    "Conform"
+
+#define NUM_THREADS 4
 
 static logstream<ANDROID_LOG_INFO> INFO(LOG_TAG);
 static logstream<ANDROID_LOG_DEBUG> DEBUG(LOG_TAG);
@@ -75,6 +77,11 @@ BitmapSampler::BitmapSampler(const uint32_t *srcPixels, const uint32_t srcWidth,
 	m_wrapMode(wrapMode) {
 }
 
+//BitmapSampler::BitmapSampler(const BitmapSampler& o):
+//		m_srcPixels(o.m_srcPixels), m_srcWidth(o.m_srcWidth), m_srcHeight(o.m_srcHeight),
+//		m_xMult(o.m_xMult), m_yMult(o.m_yMult), m_wrapMode(o.m_wrapMode) {
+//}
+
 const Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
 	const fixpoint xfix = wrapOrClamp(((w.real()+1)/2)*m_xMult, m_wrapMode)*fixpoint(m_srcWidth-1);
 	const fixpoint yfix = wrapOrClamp(((w.imag()+1)/2)*m_yMult, m_wrapMode)*fixpoint(m_srcHeight-1);
@@ -91,22 +98,32 @@ const Pixel BitmapSampler::bilinearSample(const complex<fixpoint> &w) const {
 }
 //MappedBitmap----------------------------------------
 
-MappedBitmap::MappedBitmap(uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight) :
-	m_destPixels(destPixels), m_destWidth(destWidth), m_destHeight(destHeight),
+MappedBitmap::MappedBitmap(const BitmapSampler& src, uint32_t *destPixels, const uint32_t destWidth, const uint32_t destHeight, const BlaschkeMap& map) :
+	m_src(src), m_destPixels(destPixels), m_destWidth(destWidth), m_destHeight(destHeight), m_map(map),
 	m_reInc(fixpoint(2)/fixpoint(m_destWidth-1)), m_imInc(fixpoint(2)/fixpoint(m_destHeight-1)) {
 }
-
-void MappedBitmap::pullbackSampledBitmap(const BlaschkeMap& map, const BitmapSampler& src) {
-	fixpoint zim(-1);
-	for (int v = 0; v < m_destHeight; ++v) {
+void MappedBitmap::pullbackSlice(const int startHeight, const int endHeight) {
+	fixpoint zim = -1 + m_imInc * startHeight;
+	for (int v = startHeight; v < endHeight; ++v) {
 		fixpoint zre(-1);
 		for (int u = 0; u < m_destWidth; ++u) {
 			const complex<fixpoint> z(zre,zim);
-			const complex<fixpoint> w(map(z));
-			src.bilinearSample(w).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
+			const complex<fixpoint> w(m_map(z));
+			m_src.bilinearSample(w).write(m_destPixels[v*m_destWidth+u]); //sample color from src at map(z) and write to dest
 			zre += m_reInc;
 		}
 		zim += m_imInc;
+	}
+}
+
+void MappedBitmap::pullbackSampledBitmap() {
+	const int chunkHeight = m_destHeight / NUM_THREADS;
+	int startHeight = 0;
+	int endHeight = chunkHeight;
+	while (endHeight <= m_destHeight) {
+		async(launch::async, &MappedBitmap::pullbackSlice, this, startHeight, endHeight);
+		startHeight = endHeight;
+		endHeight += chunkHeight;
 	}
 }
 
@@ -166,6 +183,8 @@ BlaschkeMap::BlaschkeMap(const MobiusTrans& a, const MobiusTrans& b) : m_factors
 BlaschkeMap::BlaschkeMap(const BlaschkeMap& g) : m_numFactors(g.m_numFactors), m_lhs(g.m_lhs) {
 	copy(&g.m_factors[0], &g.m_factors[0] + g.m_numFactors, &m_factors[0]);
 }
+
+
 
 const complex<fixpoint> BlaschkeMap::operator()(const complex<fixpoint> &z) const {
 	complex<fixpoint> w(ONE);

@@ -110,10 +110,9 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		blas *= MobiusTrans::hyperbolicIsometry(complex<fixpoint>(fixpoint(params[2*i]),fixpoint(params[2*i+1])));
 	}
 	const BlaschkeMap map(blas|-affine);
-
-	MappedBitmap viewPlane(destPtr, destInfo.width, destInfo.height);
 	const BitmapSampler sampler(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
-	viewPlane.pullbackSampledBitmap(map, sampler);
+	MappedBitmap viewPlane(sampler, destPtr, destInfo.width, destInfo.height, map);
+	viewPlane.pullbackSampledBitmap();
 
 	env->ReleaseFloatArrayElements(paramArray, params, 0);
 

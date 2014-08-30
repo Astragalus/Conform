@@ -157,8 +157,8 @@ public class BitmapperView extends ImageView {
 	private Bitmap m_srcBitmap;
 	private Bitmap m_destBitmap = null;
 	
-	private int m_drawWidth = 384;
-	private int m_drawHeight = 384;
+	private int m_drawWidth = 480;
+	private int m_drawHeight = 480;
 	
 	private final BitmapperTouchHandler m_touchHandler;
 	private final TransformationState m_transState;
