@@ -23,7 +23,7 @@ using namespace std;
 
 #define  LOG_TAG    "Conform"
 
-#define NUM_THREADS 4
+#define NUM_THREADS 3
 
 static logstream<ANDROID_LOG_INFO> INFO(LOG_TAG);
 static logstream<ANDROID_LOG_DEBUG> DEBUG(LOG_TAG);
