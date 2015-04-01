@@ -5,7 +5,9 @@
     <string name="menu_item_save_image">Save Image</string>
     <string name="menu_item_should_tile">Tile</string>
     <string name="menu_item_should_clamp">Clamp</string>
-    <string name="menu_item_pan_mode">Pan Mode</string>
+    <string name="menu_item_touch_mode">Touch Mode</string>
+    <string name="touch_mode_pink_dots">Pink Dots</string>
+    <string name="touch_mode_three_points">Three Points</string>
     <string name="menu_item_add_param">Add A Zero</string>
     <string name="menu_item_remove_zero">Remove a Zero</string>
     <string name="default_bitmap_desc">Default Bitmap Image Representing The Complex Plane</string>

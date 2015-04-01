@@ -10,9 +10,17 @@
         android:id="@+id/touchMode"
         android:icon="@drawable/selector_ic_btn_arrows"
         android:showAsAction="ifRoom"
-        android:title="@string/menu_item_pan_mode"
-        android:checkable="true"
-        android:checked="false">
+        android:title="@string/menu_item_touch_mode">
+        <menu>
+            <item 
+                android:id="@+id/pink_dot_mode"
+                android:title="@string/touch_mode_pink_dots">
+            </item>
+            <item 
+                android:id="@+id/three_point_mode"
+                android:title="@string/touch_mode_three_points">
+            </item>
+       </menu>
     </item>
     <item
         android:id="@+id/addParamMenuItem"

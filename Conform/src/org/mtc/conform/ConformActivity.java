@@ -55,9 +55,18 @@ public class ConformActivity extends Activity {
 		return true;
     }
     
-    private boolean setTouchMode(final Mode touchMode) {
+    private void setTouchMode(final Mode touchMode) {
     	getBitmapperView().setTouchMode(touchMode);
-    	return touchMode == Mode.CODOMAIN;
+    }
+    
+    public boolean onSelectPinkDotMode() {
+    	setTouchMode(Mode.PINK_DOTS);
+    	return true;
+    }
+    
+    public boolean onSelectThreePointMode() {
+    	setTouchMode(Mode.THREE_POINTS);
+    	return true;
     }
     
     private boolean addParam() {
@@ -85,7 +94,6 @@ public class ConformActivity extends Activity {
     		handledEvent = true;
     		break;
     	case R.id.touchMode:
-    		item.setChecked((!item.isChecked() && setTouchMode(Mode.CODOMAIN)) || setTouchMode(Mode.DOMAIN));
     		handledEvent = true;
     		break;
     	case R.id.addParamMenuItem:
@@ -102,6 +110,14 @@ public class ConformActivity extends Activity {
     		break;
     	case R.id.shouldClamp:
     		item.setChecked(!item.isChecked() && setWrapMode(ConformLib.WrapMode.CLAMP));
+    		handledEvent = true;
+    		break;
+    	case R.id.pink_dot_mode:
+    		onSelectPinkDotMode();
+    		handledEvent = true;
+    		break;
+    	case R.id.three_point_mode:
+    		onSelectThreePointMode();
     		handledEvent = true;
     		break;
     	}

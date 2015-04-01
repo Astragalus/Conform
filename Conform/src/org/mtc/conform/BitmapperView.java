@@ -139,13 +139,13 @@ public class BitmapperView extends ImageView {
 	
 	public static class BitmapperMode {
 		public enum Mode {
-			DOMAIN(0),
-			CODOMAIN(1);
+			PINK_DOTS(0),
+			THREE_POINTS(1);
 			private Mode(final int mode) {this.mode =  mode;}
 			public int getInt() {return mode;}
 			private final int mode;
 		}
-		private Mode m_touchMode = Mode.DOMAIN;
+		private Mode m_touchMode = Mode.PINK_DOTS;
 		public Mode getTouchMode() {
 			return m_touchMode;
 		}
@@ -194,18 +194,10 @@ public class BitmapperView extends ImageView {
 	
 	@Override
 	protected void onDraw(final Canvas canvas) {	
-//		if (count == 0)
-//			start = System.currentTimeMillis();
 		m_destBitmap.eraseColor(0);
 		ConformLib.INSTANCE.pullback(m_srcBitmap, m_destBitmap, m_paramHolder.getNormalizedParams(), m_transState.getCurrTrans(), m_wrapMode);
 		canvas.drawBitmap(m_destBitmap, getImageMatrix(), null);
 		m_paramHolder.applyScreenCoords(m_poleDrawer.setCanvas(canvas));
-//		++count;
-//		if ((time = System.currentTimeMillis()-start) < 3000) {
-//			Log.i(TAG,String.format("fps: %2.2f", (float)(1000*count)/(float)time));
-//		} else {
-//			count = 0;
-//		}
 	}
 	@Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
