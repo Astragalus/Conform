@@ -22,9 +22,9 @@ public class ConformLib {
 	}
 
 	public int pullback(Bitmap sourceBitmap, Bitmap viewBitmap, ComplexArray params, ComplexAffineTrans currTrans, WrapMode wrapMode) {
-		return pullbackBitmaps(sourceBitmap, viewBitmap, params.arr, params.size(), currTrans.tr.re, currTrans.tr.im, currTrans.sc.re, wrapMode.getInt());
+		return pullbackBitmap(sourceBitmap, viewBitmap, params.arr, params.size(), currTrans.tr.re, currTrans.tr.im, currTrans.sc.re, wrapMode.getInt());
 	}
 	
-	private native int pullbackBitmaps(Bitmap sourceBitmap, Bitmap viewBitmap, float[] paramArray, int numParams, float pivotX, float pivotY, float scaleFac, int wrapMode);
-	
+	private native int pullbackBitmap(Bitmap sourceBitmap, Bitmap viewBitmap, float[] paramArray, int numParams, float pivotX, float pivotY, float scaleFac, int wrapMode);
+	private native int pullbackBitmapByExpression(Bitmap sourceBitmap, Bitmap viewBitmap, String expression, float[] paramArray, int numParams, float pivotX, float pivotY, float scaleFac, int wrapMode);	
 }

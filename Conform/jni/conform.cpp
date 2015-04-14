@@ -8,98 +8,31 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+#include <signal.h>
 #include <jni.h>
-#include <android/bitmap.h>
 
 #include "logstream.h"
+#include "bitmapwrapper.h"
 #include "bitmapper.h"
-#include "signal.h"
 
 using namespace std;
 
 #define  LOG_TAG    "Conform"
 
-static logstream<ANDROID_LOG_INFO> INFO(LOG_TAG);
-static logstream<ANDROID_LOG_DEBUG> DEBUG(LOG_TAG);
-static logstream<ANDROID_LOG_ERROR> ERROR(LOG_TAG);
-
-#define ANDROID_BITMAP_RESULT_SUCCESS            0
-#define ANDROID_BITMAP_RESULT_BAD_PARAMETER     -1
-#define ANDROID_BITMAP_RESULT_JNI_EXCEPTION     -2
-#define ANDROID_BITMAP_RESULT_ALLOCATION_FAILED -3
-
-const char *bitmapStatusToString(const int status) {
-	switch (status) {
-	case ANDROID_BITMAP_RESULT_SUCCESS:
-		return "ANDROID_BITMAP_RESULT_SUCCESS";
-	case ANDROID_BITMAP_RESULT_BAD_PARAMETER:
-		return "ANDROID_BITMAP_RESULT_BAD_PARAMETER";
-	case ANDROID_BITMAP_RESULT_JNI_EXCEPTION:
-		return "ANDROID_BITMAP_RESULT_JNI_EXCEPTION";
-	case ANDROID_BITMAP_RESULT_ALLOCATION_FAILED:
-		return "ANDROID_BITMAP_RESULT_ALLOCATION_FAILED";
-	default:
-		return "Unknown Status";
-	}
-}
-
-const char *bitmapFormatToString(const int fmt) {
-	switch (fmt) {
-	case ANDROID_BITMAP_FORMAT_NONE:
-		return "ANDROID_BITMAP_FORMAT_NONE";
-	case ANDROID_BITMAP_FORMAT_RGB_565:
-		return "ANDROID_BITMAP_FORMAT_RGB_565";
-	case ANDROID_BITMAP_FORMAT_RGBA_4444:
-		return "ANDROID_BITMAP_FORMAT_RGBA_4444";
-	case ANDROID_BITMAP_FORMAT_A_8:
-		return "ANDROID_BITMAP_FORMAT_A_8";
-	case ANDROID_BITMAP_FORMAT_RGBA_8888:
-		return "ANDROID_BITMAP_FORMAT_RGBA_8888";
-	default:
-		return "Unknown Format";
-	}
-}
+logstream<ANDROID_LOG_INFO> INFO(LOG_TAG);
+logstream<ANDROID_LOG_DEBUG> DEBUG(LOG_TAG);
+logstream<ANDROID_LOG_ERROR> ERROR(LOG_TAG);
 
 extern "C" {
-	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmap(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
+	JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmapByExpression(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jstring expression, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode);
 }
 
-
-JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
-	int status = 0;
-
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmap(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
 	signal(SIGFPE, SIG_IGN); //ignore arithmetic errors - tried rooting them out but still get 'em.  Don't care anyway, so...
 
-	AndroidBitmapInfo sourceInfo;
-	status = AndroidBitmap_getInfo(env, bmSource, &sourceInfo);
-	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		ERROR << "AndroidBitmap_getInfo failed for source bm: " << bitmapStatusToString(status) << endl;
-		return status;
-	}
-	if (sourceInfo.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-		ERROR << "Source bitmap format is not 8888 - format: " << bitmapFormatToString(sourceInfo.format) << endl;
-	}
-	uint32_t *sourcePtr;
-	status = AndroidBitmap_lockPixels(env, bmSource, (void **) &sourcePtr);
-	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		ERROR << "AndroidBitmap_lockPixels failed for source bm: " << bitmapStatusToString(status) << endl;
-		return status;
-	}
-	AndroidBitmapInfo destInfo;
-	status = AndroidBitmap_getInfo(env, bmDest, &destInfo);
-	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		ERROR << "AndroidBitmap_getInfo failed for dest bm: " << bitmapStatusToString(status) << endl;
-		return status;
-	}
-	if (destInfo.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-		ERROR << "Dest bitmap format is not 8888 - format: " << bitmapFormatToString(destInfo.format) << endl;
-	}
-	uint32_t *destPtr;
-	status = AndroidBitmap_lockPixels(env, bmDest, (void **) &destPtr);
-	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		ERROR << "AndroidBitmap_lockPixels failed for dest bm: " << bitmapStatusToString(status) << endl;
-		return status;
-	}
+	BitmapWrapper source(env, bmSource);
+	BitmapWrapper dest(env, bmDest);
 
 	jboolean isCopy;
 	jfloat* params = env->GetFloatArrayElements(paramArray, &isCopy);
@@ -110,22 +43,15 @@ JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmaps(JNIEnv *e
 		blas *= MobiusTrans::hyperbolicIsometry(complex<fixpoint>(fixpoint(params[2*i]),fixpoint(params[2*i+1])));
 	}
 	const BlaschkeMap map(blas|-affine);
-	const BitmapSampler sampler(sourcePtr, sourceInfo.width, sourceInfo.height, wrapMode);
-	MappedBitmap viewPlane(sampler, destPtr, destInfo.width, destInfo.height, map);
+	const BitmapSampler sampler(source.getData(), source.getWidth(), source.getHeight(), wrapMode);
+	MappedBitmap viewPlane(sampler, dest.getData(), dest.getWidth(), dest.getHeight(), map);
 	viewPlane.pullbackSampledBitmap();
 
 	env->ReleaseFloatArrayElements(paramArray, params, 0);
+	uint32_t t;
+	return 0;
+}
 
-	status = AndroidBitmap_unlockPixels(env, bmSource);
-	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		ERROR << "AndroidBitmap_unlockPixels failed for source bm: " << bitmapStatusToString(status) << endl;
-		return status;
-	}
-	status = AndroidBitmap_unlockPixels(env, bmDest);
-	if (status != ANDROID_BITMAP_RESULT_SUCCESS) {
-		ERROR << "AndroidBitmap_unlockPixels failed for dest bm: " << bitmapStatusToString(status) << endl;
-		return status;
-	}
-	
-	return status;
+JNIEXPORT jint JNICALL Java_org_mtc_conform_ConformLib_pullbackBitmapByExpression(JNIEnv *env, jobject thiz, jobject bmSource, jobject bmDest, jstring expression, jfloatArray paramArray, jint numParams, jfloat pivotX, jfloat pivotY, jfloat scaleFac, jint wrapMode) {
+	return 0;
 }

@@ -32,17 +32,18 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int selector_ic_btn_arrows=0x7f020006;
     }
     public static final class id {
-        public static final int addParamMenuItem=0x7f080005;
+        public static final int addParamMenuItem=0x7f080006;
         public static final int bitmapperView=0x7f080000;
-        public static final int loadImage=0x7f080001;
-        public static final int pink_dot_mode=0x7f080003;
-        public static final int removeParamMenuItem=0x7f080006;
-        public static final int saveImage=0x7f080007;
-        public static final int shouldClamp=0x7f08000a;
-        public static final int shouldTile=0x7f080009;
-        public static final int three_point_mode=0x7f080004;
-        public static final int touchMode=0x7f080002;
-        public static final int wrapModeMenuGroup=0x7f080008;
+        public static final int editTextExpression=0x7f080001;
+        public static final int loadImage=0x7f080002;
+        public static final int pink_dot_mode=0x7f080004;
+        public static final int removeParamMenuItem=0x7f080007;
+        public static final int saveImage=0x7f080008;
+        public static final int shouldClamp=0x7f08000b;
+        public static final int shouldTile=0x7f08000a;
+        public static final int three_point_mode=0x7f080005;
+        public static final int touchMode=0x7f080003;
+        public static final int wrapModeMenuGroup=0x7f080009;
     }
     public static final class layout {
         public static final int activity_conform=0x7f030000;
@@ -53,6 +54,8 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     public static final class string {
         public static final int app_name=0x7f050000;
         public static final int default_bitmap_desc=0x7f05000a;
+        public static final int editExpressionDesc=0x7f05000b;
+        public static final int editExpressionHint=0x7f05000c;
         public static final int menu_item_add_param=0x7f050008;
         public static final int menu_item_load_image=0x7f050001;
         public static final int menu_item_remove_zero=0x7f050009;

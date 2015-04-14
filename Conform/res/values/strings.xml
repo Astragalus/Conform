@@ -11,4 +11,6 @@
     <string name="menu_item_add_param">Add A Zero</string>
     <string name="menu_item_remove_zero">Remove a Zero</string>
     <string name="default_bitmap_desc">Default Bitmap Image Representing The Complex Plane</string>
+    <string name="editExpressionDesc">Enter a mathematical expression here</string>
+    <string name="editExpressionHint">(z-a)/(1-conj(a)*z)</string>
 </resources>
