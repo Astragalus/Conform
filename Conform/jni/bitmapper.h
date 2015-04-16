@@ -24,8 +24,6 @@
 
 using namespace std;
 
-typedef fixed_point<16> fixpoint;
-
 static const complex<fixpoint> ONE(1,0);
 static const complex<fixpoint> ZERO(0,0);
 

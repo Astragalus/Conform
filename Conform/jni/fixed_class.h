@@ -247,5 +247,7 @@ inline fixed_point<p> multiply_accumulate(
 	return r;
 }
 
+typedef fixed_point<16> fixpoint;
+
 #endif
 

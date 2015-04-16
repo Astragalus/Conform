@@ -19,8 +19,10 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     public static final class color {
         public static final int black=0x7f040000;
         public static final int greyish=0x7f040001;
+        public static final int lightblue=0x7f040005;
         public static final int lightishgreyish=0x7f040002;
         public static final int reddish=0x7f040003;
+        public static final int translucent=0x7f040004;
     }
     public static final class drawable {
         public static final int celtic=0x7f020000;
@@ -33,8 +35,8 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     }
     public static final class id {
         public static final int addParamMenuItem=0x7f080006;
-        public static final int bitmapperView=0x7f080000;
-        public static final int editTextExpression=0x7f080001;
+        public static final int bitmapperView=0x7f080001;
+        public static final int expressionText=0x7f080000;
         public static final int loadImage=0x7f080002;
         public static final int pink_dot_mode=0x7f080004;
         public static final int removeParamMenuItem=0x7f080007;

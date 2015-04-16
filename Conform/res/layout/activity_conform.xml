@@ -1,28 +1,34 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:fitsSystemWindows="true"
+    android:orientation="vertical"
     android:tag="BitmapperView"
     tools:context=".ConformActivity" >
 
+    <EditText
+        android:id="@+id/expressionText"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/translucent"
+        android:height="20dp"
+        android:inputType="text"
+        android:minHeight="20dp"
+        android:scrollHorizontally="true"
+        android:textColor="@color/lightblue" />
+        
     <org.mtc.conform.BitmapperView
         android:id="@+id/bitmapperView"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:src="@drawable/celtic"
         android:background="@color/black"
         android:contentDescription="@string/default_bitmap_desc" />
     
-    <EditText
-        android:id="@+id/editTextExpression"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="10dp"
-        android:inputType="text"
-        android:visibility="invisible" 
-        android:enabled="false"/>
-        
-</FrameLayout>
+</LinearLayout>

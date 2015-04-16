@@ -20,10 +20,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore.Images;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 
 public class ConformActivity extends Activity {
 	public final static String TAG = "Conform";
@@ -36,6 +40,20 @@ public class ConformActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conform);
+        
+        EditText exprText = (EditText) findViewById(R.id.expressionText);
+        exprText.setOnEditorActionListener(new OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId,	KeyEvent event) {
+				boolean handled = false; 
+				final String expr = v.getText().toString();
+				if (!expr.isEmpty()) {
+					getBitmapperView().setExpression(expr);
+					handled = true;
+				}
+				return handled;
+			}       
+        });
     }
     
     @Override

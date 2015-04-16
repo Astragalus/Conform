@@ -26,16 +26,12 @@ import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
 import android.widget.ImageView;
-import android.widget.TextView;
 
-public class BitmapperView extends ImageView implements TextWatcher {
+public class BitmapperView extends ImageView {
 
 	public static final String TAG = "Conform";
 	
@@ -174,7 +170,7 @@ public class BitmapperView extends ImageView implements TextWatcher {
 	private final ParamHolder m_paramHolder;
 	
 	private String m_expression = "";
-
+	
 //	long start;
 //	long time;
 //	int count;
@@ -231,10 +227,6 @@ public class BitmapperView extends ImageView implements TextWatcher {
 		return ((BitmapDrawable)getDrawable()).getBitmap(); 
 	}
 	
-	public void setExpression(String expr) {
-		m_expression = expr;
-	}
-	
 	public void setWrapMode(final ConformLib.WrapMode wrapMode) {
 		m_wrapMode = wrapMode;
 		Log.i(TAG, "Wrap mode set to: " + wrapMode.name());
@@ -244,12 +236,6 @@ public class BitmapperView extends ImageView implements TextWatcher {
 	public void setTouchMode(final Mode touchMode) {
 		m_mode.m_touchMode = touchMode;
 		Log.i(TAG, "touch mode  [" + touchMode.name() + "]");
-		View exp = findViewById(R.id.editTextExpression);
-		if (exp != null) {
-			exp.setActivated(touchMode.equals(Mode.THREE_POINTS));
-		} else {
-			Log.e(TAG,"nullzz");
-		}
 		invalidate();
 	}
 	
@@ -267,18 +253,12 @@ public class BitmapperView extends ImageView implements TextWatcher {
 			return false;
 		}
 	}
-
-	@Override
-	public void beforeTextChanged(CharSequence s, int start, int count,	int after) {
+	
+	public void setExpression(final String expression) {
+		m_expression = expression;
 	}
-
-	@Override
-	public void onTextChanged(CharSequence s, int start, int before, int count) {
-	}
-
-	@Override
-	public void afterTextChanged(Editable s) {
-		setExpression(s.toString());
-		invalidate();
+	
+	public String getExpression() {
+		return m_expression;
 	}
 }

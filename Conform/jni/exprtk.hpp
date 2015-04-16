@@ -53,6 +53,7 @@
 #include <utility>
 #include <vector>
 
+#include "fixed_class.h"
 
 namespace exprtk
 {
@@ -670,6 +671,7 @@ namespace exprtk
             exprtk_register_real_type_tag(double     )
             exprtk_register_real_type_tag(long double)
             exprtk_register_real_type_tag(float      )
+			exprtk_register_real_type_tag(fixpoint   )
 
             exprtk_register_int_type_tag(short                 )
             exprtk_register_int_type_tag(int                   )
@@ -697,6 +699,16 @@ namespace exprtk
                static inline float value()
                {
                   const float epsilon = float(0.000001f);
+                  return epsilon;
+               }
+            };
+
+            template <>
+            struct epsilon_type <fixpoint>
+            {
+               static inline fixpoint value()
+               {
+                  const fixpoint epsilon = fixpoint(0.000001f);
                   return epsilon;
                }
             };
@@ -770,6 +782,12 @@ namespace exprtk
             {
                const float epsilon = epsilon_type<float>::value();
                return (abs_impl(v0 - v1,real_type_tag()) <= (std::max(1.0f,std::max(abs_impl(v0,real_type_tag()),abs_impl(v1,real_type_tag()))) * epsilon)) ? 1.0f : 0.0f;
+            }
+
+            inline fixpoint equal_impl(const fixpoint v0, const fixpoint v1, real_type_tag)
+            {
+               const float epsilon = epsilon_type<fixpoint>::value();
+               return (abs_impl(v0 - v1,real_type_tag()) <= (std::max(1.0f,std::max(abs_impl(v0,real_type_tag()),abs_impl(v1,real_type_tag()))) * epsilon)) ? 1.0f : 0.0f; //TODO
             }
 
             template <typename T>

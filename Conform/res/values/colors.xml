@@ -4,5 +4,7 @@
     <color name="greyish">#7F3F3F3F</color>
     <color name="lightishgreyish">#7FAFAFAF</color>
     <color name="reddish">#7FFF3F07</color>
+    <color name="translucent">#7F000000</color>
+    <color name="lightblue">#FF7FA0FF</color>
 
 </resources>
